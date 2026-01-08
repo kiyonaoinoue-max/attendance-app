@@ -33,7 +33,12 @@ export default function ReportPage() {
     };
 
     const calcStats = (studentId: string, start: Date, end: Date) => {
-        const validDays = getValidDays(start, end);
+        // Cap the end date at "Today" (end of today) to avoid counting future days
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+
+        const effectiveEnd = end > today ? today : end;
+        const validDays = getValidDays(start, effectiveEnd);
 
         // Attendance Rate (4 periods only)
         const totalSlots = validDays.length * 4;
