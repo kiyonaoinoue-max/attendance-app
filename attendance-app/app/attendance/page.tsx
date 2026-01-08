@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/store/useStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,8 +28,17 @@ export default function AttendancePage() {
     const { students, attendanceRecords, calendar, toggleAttendance } = useStore();
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [period, setPeriod] = useState(0); // 0 = HR
-    const [zoomLevel, setZoomLevel] = useState(1); // 0.6 to 1.4
+    const [zoomLevel, setZoomLevel] = useState(1); // 0.4 to 1.4
+    const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
+    const studentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+    // Auto-select first student on mount/data load
+    useEffect(() => {
+        if (students.length > 0 && !selectedStudentId) {
+            setSelectedStudentId(students[0].id);
+        }
+    }, [students, selectedStudentId]);
 
     useEffect(() => {
         setMounted(true);
@@ -60,7 +69,7 @@ export default function AttendancePage() {
                 <h1 className="text-xl font-bold text-slate-900">出席簿入力</h1>
                 {/* Zoom Control */}
                 <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setZoomLevel(Math.max(0.6, zoomLevel - 0.1))}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setZoomLevel(Math.max(0.4, zoomLevel - 0.1))}>
                         <Minus className="h-4 w-4" />
                     </Button>
                     <span className="text-xs font-mono w-8 text-center">{Math.round(zoomLevel * 100)}%</span>
@@ -117,93 +126,142 @@ export default function AttendancePage() {
                     「学生管理」メニューから学生を登録してください。
                 </Card>
             ) : (
-                <div className="space-y-2">
-                    {students.map((student) => {
-                        const currentPeriodStatus = getStatus(student.id, period);
-                        const config = currentPeriodStatus ? STATUS_CONFIG[currentPeriodStatus] : null;
-                        const Icon = config?.icon;
+                <div className="flex gap-4 items-start">
+                    {/* Left: Student List */}
+                    <div className="flex-1 space-y-2 pb-40">
+                        {students.map((student, index) => {
+                            const currentPeriodStatus = getStatus(student.id, period);
+                            const isSelected = selectedStudentId === student.id;
 
-                        return (
-                            <div
-                                key={student.id}
-                                className="flex items-center justify-between bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-all select-none overflow-hidden"
-                                style={{
-                                    padding: `${16 * zoomLevel}px`,
-                                    minHeight: `${80 * zoomLevel}px`
-                                }}
-                            >
-                                {/* Left: Info & Grid */}
-                                <div className="flex flex-col gap-2 flex-1">
-                                    <div className="flex items-center gap-4">
-                                        <div
-                                            className="font-bold text-slate-500"
-                                            style={{ fontSize: `${14 * zoomLevel}px` }}
-                                        >
-                                            {student.studentNumber}
-                                        </div>
-                                        <div
-                                            className="font-extrabold text-slate-900 leading-tight"
-                                            style={{ fontSize: `${18 * zoomLevel}px` }}
-                                        >
-                                            {student.name}
-                                        </div>
-                                    </div>
-
-                                    {/* 5-Period Grid */}
-                                    <div className="flex gap-1 mt-1">
-                                        {PERIODS.map((p) => {
-                                            const status = getStatus(student.id, p.id);
-                                            const isActive = period === p.id;
-                                            const isUntouched = status === null;
-                                            return (
-                                                <div
-                                                    key={p.id}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setPeriod(p.id);
-                                                    }}
-                                                    className={cn(
-                                                        "h-6 flex-1 rounded text-[10px] flex items-center justify-center font-bold cursor-pointer transition-all border",
-                                                        isUntouched ? 'bg-slate-100 text-slate-300 border-slate-200' :
-                                                            status === 'present' ? 'bg-green-400 text-white border-green-500' :
-                                                                status === 'absent' ? 'bg-red-500 text-white border-red-600' :
-                                                                    status === 'late' ? 'bg-yellow-400 text-yellow-900 border-yellow-500' :
-                                                                        'bg-orange-400 text-white border-orange-500',
-                                                        isActive ? 'ring-2 ring-blue-500 ring-offset-1 z-10' : 'opacity-80 hover:opacity-100'
-                                                    )}
-                                                    title={`${p.label}: ${isUntouched ? '未入力' : STATUS_CONFIG[status].label}`}
-                                                >
-                                                    {isUntouched ? '-' : STATUS_CONFIG[status].label[0]}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* Right: Current Status Toggle Button */}
+                            return (
                                 <div
-                                    onClick={() => toggleAttendance(student.id, date, period)}
+                                    key={student.id}
+                                    ref={el => { studentRefs.current[student.id] = el }}
+                                    onClick={() => setSelectedStudentId(student.id)}
                                     className={cn(
-                                        "flex flex-col items-center justify-center rounded-lg font-bold transition-colors cursor-pointer active:scale-95 ml-4",
-                                        config ? config.color : 'bg-slate-100 text-slate-400 border-slate-300',
-                                        "border-2"
+                                        "flex items-center justify-between bg-white rounded-lg border shadow-sm transition-all select-none overflow-hidden cursor-pointer",
+                                        isSelected ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 z-10" : "border-slate-200 hover:border-slate-300"
                                     )}
                                     style={{
-                                        width: `${90 * zoomLevel}px`,
-                                        height: `${60 * zoomLevel}px`,
-                                        padding: `${8 * zoomLevel}px`
+                                        padding: `${16 * zoomLevel}px`,
+                                        minHeight: `${80 * zoomLevel}px`
                                     }}
                                 >
-                                    {Icon ? (
-                                        <Icon className="mb-1" style={{ width: `${24 * zoomLevel}px`, height: `${24 * zoomLevel}px` }} />
-                                    ) : (
-                                        <div className="mb-1" style={{ width: `${24 * zoomLevel}px`, height: `${24 * zoomLevel}px`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>—</div>
+                                    {/* Info & Grid */}
+                                    <div className="flex flex-col gap-2 flex-1">
+                                        <div className="flex items-center gap-4">
+                                            <div
+                                                className="font-bold text-slate-500"
+                                                style={{ fontSize: `${14 * zoomLevel}px` }}
+                                            >
+                                                {student.studentNumber}
+                                            </div>
+                                            <div
+                                                className="font-extrabold text-slate-900 leading-tight"
+                                                style={{ fontSize: `${18 * zoomLevel}px` }}
+                                            >
+                                                {student.name}
+                                            </div>
+                                        </div>
+
+                                        {/* 5-Period Grid */}
+                                        <div className="flex gap-1 mt-1">
+                                            {PERIODS.map((p) => {
+                                                const status = getStatus(student.id, p.id);
+                                                const isActive = period === p.id;
+                                                const isUntouched = status === null;
+                                                return (
+                                                    <div
+                                                        key={p.id}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setPeriod(p.id);
+                                                            setSelectedStudentId(student.id);
+                                                        }}
+                                                        className={cn(
+                                                            "h-6 flex-1 rounded text-[10px] flex items-center justify-center font-bold cursor-pointer transition-all border",
+                                                            isUntouched ? 'bg-slate-100 text-slate-300 border-slate-200' :
+                                                                status === 'present' ? 'bg-green-400 text-white border-green-500' :
+                                                                    status === 'absent' ? 'bg-red-500 text-white border-red-600' :
+                                                                        status === 'late' ? 'bg-yellow-400 text-yellow-900 border-yellow-500' :
+                                                                            'bg-orange-400 text-white border-orange-500',
+                                                            isActive ? 'ring-2 ring-blue-500 ring-offset-1 z-10' : 'opacity-80 hover:opacity-100'
+                                                        )}
+                                                        title={`${p.label}: ${isUntouched ? '未入力' : STATUS_CONFIG[status].label}`}
+                                                    >
+                                                        {isUntouched ? '-' : STATUS_CONFIG[status].label[0]}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Current Status Indicator (Mini) */}
+                                    {currentPeriodStatus && (
+                                        <div className={cn(
+                                            "ml-4 px-2 py-1 rounded text-xs font-bold",
+                                            STATUS_CONFIG[currentPeriodStatus].color
+                                        )}>
+                                            {STATUS_CONFIG[currentPeriodStatus].label}
+                                        </div>
                                     )}
-                                    <span style={{ fontSize: `${12 * zoomLevel}px` }}>{config ? config.label : 'タップ'}</span>
                                 </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Right: Fixed Control Panel */}
+                    <div className="w-48 sticky top-40 bg-white rounded-xl border border-slate-200 shadow-xl p-4 space-y-4">
+                        <div className="text-center border-b pb-2">
+                            <div className="text-xs text-slate-500">選択中</div>
+                            <div className="font-bold text-lg truncate">
+                                {selectedStudentId ? students.find(s => s.id === selectedStudentId)?.name : '選択なし'}
                             </div>
-                        );
-                    })}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2">
+                            {(Object.keys(STATUS_CONFIG) as AttendanceStatus[]).map(s => {
+                                const cfg = STATUS_CONFIG[s];
+                                const Icon = cfg.icon;
+                                return (
+                                    <button
+                                        key={s}
+                                        onClick={() => {
+                                            if (!selectedStudentId) return;
+                                            toggleAttendance(selectedStudentId, date, period, s);
+
+                                            // Auto-advance
+                                            const currentIndex = students.findIndex(st => st.id === selectedStudentId);
+                                            if (currentIndex < students.length - 1) {
+                                                const nextStudent = students[currentIndex + 1];
+                                                setSelectedStudentId(nextStudent.id);
+                                                // Scroll logic handled by scrollIntoView in useEffect or manual trigger? 
+                                                // Let's do manual trigger here since we have refs
+                                                const el = studentRefs.current[nextStudent.id];
+                                                if (el) {
+                                                    // Scroll with offset
+                                                    const y = el.getBoundingClientRect().top + window.scrollY - 200; // Offset for header
+                                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                                }
+                                            }
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-3 p-3 rounded-lg border-2 transition-all hover:brightness-95 active:scale-95",
+                                            cfg.color,
+                                            "bg-opacity-20 border-opacity-50" // Muted background
+                                        )}
+                                    >
+                                        <Icon className="h-6 w-6" />
+                                        <span className="font-bold">{cfg.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="text-xs text-center text-slate-400 mt-4">
+                            ボタンを押すと自動で次の人に移動します
+                        </div>
+                    </div>
                 </div>
             )}
 

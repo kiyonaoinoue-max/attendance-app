@@ -66,13 +66,19 @@ export default function ReportPage() {
         validDays.forEach(d => {
             const dStr = format(d, 'yyyy-MM-dd');
             const dayIndex = getDay(d);
+
+            // Determine term based on date
+            // Simple logic: if date >= second term start, use second term timetable
+            const isSecondTerm = dStr >= settings.secondTerm.start;
+            const timetable = isSecondTerm ? settings.secondTermTimetable : settings.firstTermTimetable;
+
             [1, 2, 3, 4].forEach(period => {
                 const key = `${dayIndex}-${period}`;
-                const subjectId = settings.timetable?.[key];
+                const subjectId = timetable?.[key];
                 if (subjectId) {
                     const record = attendanceRecords.find(r => r.studentId === studentId && r.date === dStr && r.period === period);
                     const isAbsent = record?.status === 'absent';
-                    if (!isAbsent) subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1;
+                    if (!isAbsent) subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
                 }
             });
         });
@@ -80,6 +86,11 @@ export default function ReportPage() {
         // Counts
         const late = attendanceRecords.filter(r => r.studentId === studentId && r.status === 'late' && parseISO(r.date) >= start && parseISO(r.date) <= end).length;
         const early = attendanceRecords.filter(r => r.studentId === studentId && r.status === 'early_leave' && parseISO(r.date) >= start && parseISO(r.date) <= end).length;
+
+        // Round subject hours to 1 decimal place
+        Object.keys(subjectHours).forEach(key => {
+            subjectHours[key] = Math.round(subjectHours[key] * 10) / 10;
+        });
 
         return {
             rate: attendanceRate,
@@ -127,7 +138,7 @@ export default function ReportPage() {
                                     return (
                                         <td key={s.id} className="border p-2">
                                             <div className="flex justify-between">
-                                                <span>{current}h</span>
+                                                <span>{current.toFixed(1)}h</span>
                                                 <span className="text-slate-400">/ {s.requiredHours}h</span>
                                             </div>
                                         </td>
@@ -138,6 +149,9 @@ export default function ReportPage() {
                     })}
                 </tbody>
             </table>
+            <div className="mt-2 text-xs text-slate-500 text-right">
+                ※履修時間は1コマ1.8時間で計算
+            </div>
         </div>
     );
 
@@ -152,7 +166,7 @@ export default function ReportPage() {
                 const stat = calcStats(s.id, start, end);
                 data.push([
                     s.studentNumber, s.name, s.className, `${stat.rate}%`, stat.late, stat.early,
-                    ...subjects.map(subj => `${stat.subjectHours[subj.id] || 0} / ${subj.requiredHours}`)
+                    ...subjects.map(subj => `${(stat.subjectHours[subj.id] || 0).toFixed(1)} / ${subj.requiredHours}`)
                 ]);
             });
             const ws = utils.aoa_to_sheet(data);

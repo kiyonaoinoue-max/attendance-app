@@ -4,6 +4,7 @@ import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2 } from 'lucide-react';
 
 const DAYS = ['月', '火', '水', '木', '金'];
@@ -125,52 +126,110 @@ export default function SubjectsPage() {
                     <CardTitle>時間割設定</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm border-collapse border border-slate-200">
-                            <thead>
-                                <tr>
-                                    <th className="border p-2 bg-slate-100">時限 \ 曜日</th>
-                                    {DAYS.map((d, i) => (
-                                        <th key={d} className="border p-2 bg-slate-100 w-1/5">{d}</th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {PERIODS.map(p => (
-                                    <tr key={p}>
-                                        <td className="border p-2 font-bold text-center bg-slate-50">{p}限</td>
-                                        {DAYS.map((d, i) => {
-                                            const dayIndex = i + 1; // 1=Mon, ..., 5=Fri
-                                            const key = `${dayIndex}-${p}`;
-                                            const currentSubjectId = settings.timetable?.[key] || '';
+                    <Tabs defaultValue="first" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-4">
+                            <TabsTrigger value="first">前期 ({settings.firstTerm?.start} 〜 {settings.firstTerm?.end})</TabsTrigger>
+                            <TabsTrigger value="second">後期 ({settings.secondTerm?.start} 〜 {settings.secondTerm?.end})</TabsTrigger>
+                        </TabsList>
 
-                                            return (
-                                                <td key={key} className="border p-2">
-                                                    <select
-                                                        className="w-full p-2 border rounded text-xs"
-                                                        value={currentSubjectId}
-                                                        onChange={(e) => {
-                                                            updateSettings({
-                                                                timetable: {
-                                                                    ...settings.timetable,
-                                                                    [key]: e.target.value
-                                                                }
-                                                            });
-                                                        }}
-                                                    >
-                                                        <option value="">(未設定)</option>
-                                                        {subjects.map(s => (
-                                                            <option key={s.id} value={s.id}>{s.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                        <TabsContent value="first">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm border-collapse border border-slate-200">
+                                    <thead>
+                                        <tr>
+                                            <th className="border p-2 bg-slate-100">時限 \ 曜日</th>
+                                            {DAYS.map((d) => (
+                                                <th key={d} className="border p-2 bg-slate-100 w-1/5">{d}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {PERIODS.map(p => (
+                                            <tr key={p}>
+                                                <td className="border p-2 font-bold text-center bg-slate-50">{p}限</td>
+                                                {DAYS.map((d, i) => {
+                                                    const dayIndex = i + 1; // 1=Mon, ..., 5=Fri
+                                                    const key = `${dayIndex}-${p}`;
+                                                    const currentSubjectId = settings.firstTermTimetable?.[key] || '';
+
+                                                    return (
+                                                        <td key={key} className="border p-2">
+                                                            <select
+                                                                className="w-full p-2 border rounded text-xs"
+                                                                value={currentSubjectId}
+                                                                onChange={(e) => {
+                                                                    updateSettings({
+                                                                        firstTermTimetable: {
+                                                                            ...settings.firstTermTimetable,
+                                                                            [key]: e.target.value
+                                                                        }
+                                                                    });
+                                                                }}
+                                                            >
+                                                                <option value="">(未設定)</option>
+                                                                {subjects.map(s => (
+                                                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="second">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm border-collapse border border-slate-200">
+                                    <thead>
+                                        <tr>
+                                            <th className="border p-2 bg-slate-100">時限 \ 曜日</th>
+                                            {DAYS.map((d) => (
+                                                <th key={d} className="border p-2 bg-slate-100 w-1/5">{d}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {PERIODS.map(p => (
+                                            <tr key={p}>
+                                                <td className="border p-2 font-bold text-center bg-slate-50">{p}限</td>
+                                                {DAYS.map((d, i) => {
+                                                    const dayIndex = i + 1; // 1=Mon, ..., 5=Fri
+                                                    const key = `${dayIndex}-${p}`;
+                                                    const currentSubjectId = settings.secondTermTimetable?.[key] || '';
+
+                                                    return (
+                                                        <td key={key} className="border p-2">
+                                                            <select
+                                                                className="w-full p-2 border rounded text-xs"
+                                                                value={currentSubjectId}
+                                                                onChange={(e) => {
+                                                                    updateSettings({
+                                                                        secondTermTimetable: {
+                                                                            ...settings.secondTermTimetable,
+                                                                            [key]: e.target.value
+                                                                        }
+                                                                    });
+                                                                }}
+                                                            >
+                                                                <option value="">(未設定)</option>
+                                                                {subjects.map(s => (
+                                                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </TabsContent>
+                    </Tabs>
                     <p className="mt-4 text-xs text-muted-foreground">
                         ※ ここで設定した時間割に基づいて、各時限の出席がどの教科の履修時間に加算されるかが決定されます。
                     </p>

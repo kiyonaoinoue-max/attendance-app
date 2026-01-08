@@ -18,7 +18,14 @@ export default function Home() {
   if (!mounted) return null;
 
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const todayAttendance = attendanceRecords.filter(r => r.date === todayStr);
+
+  // Calculate unique students who attended (present, late, early_leave) today
+  // Filter out absent records
+  const attendingStudentIds = new Set(
+    attendanceRecords
+      .filter(r => r.date === todayStr && ['present', 'late', 'early_leave'].includes(r.status))
+      .map(r => r.studentId)
+  );
 
   return (
     <div className="space-y-6">
@@ -55,11 +62,11 @@ export default function Home() {
         <Link href="/attendance">
           <Card className="hover:bg-slate-50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">本日の入力件数</CardTitle>
+              <CardTitle className="text-sm font-medium">本日の出席人数</CardTitle>
               <CalendarCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{todayAttendance.length}件</div>
+              <div className="text-2xl font-bold">{attendingStudentIds.size}名</div>
             </CardContent>
           </Card>
         </Link>

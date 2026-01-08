@@ -19,11 +19,14 @@ interface AppState {
     updateSubject: (id: string, data: Partial<Subject>) => void;
     deleteSubject: (id: string) => void;
 
-    toggleAttendance: (studentId: string, date: string, period: number) => void;
+    toggleAttendance: (studentId: string, date: string, period: number, status?: AttendanceStatus) => void;
 
     updateSettings: (settings: Partial<AppSettings>) => void;
     generateCalendar: (start: string, end: string) => void;
     toggleHoliday: (date: string) => void;
+
+    exportData: () => string;
+    importData: (code: string) => boolean;
 }
 
 const DEFAULT_STATUS_CYCLE: AttendanceStatus[] = ['present', 'absent', 'late', 'early_leave'];
@@ -46,7 +49,8 @@ export const useStore = create<AppState>()(
                     start: format(new Date(), 'yyyy-MM-dd'),
                     end: format(endOfYear(new Date()), 'yyyy-MM-dd')
                 },
-                timetable: {},
+                firstTermTimetable: {},
+                secondTermTimetable: {},
             },
 
             addStudent: (student) => set((state) => ({
@@ -78,14 +82,17 @@ export const useStore = create<AppState>()(
                 subjects: state.subjects.filter((s) => s.id !== id)
             })),
 
-            toggleAttendance: (studentId, date, period) => set((state) => {
+            toggleAttendance: (studentId, date, period, status) => set((state) => {
                 const record = state.attendanceRecords.find(
                     (r) => r.studentId === studentId && r.date === date && r.period === period
                 );
 
                 let newStatus: AttendanceStatus;
 
-                if (record) {
+                if (status) {
+                    // Specific status requested
+                    newStatus = status;
+                } else if (record) {
                     // Record exists, cycle to next status
                     const currentIndex = DEFAULT_STATUS_CYCLE.indexOf(record.status);
                     const nextIndex = (currentIndex + 1) % DEFAULT_STATUS_CYCLE.length;
@@ -126,6 +133,44 @@ export const useStore = create<AppState>()(
                     c.date === date ? { ...c, isHoliday: !c.isHoliday } : c
                 )
             })),
+
+            exportData: () => {
+                const state = get();
+                const data = {
+                    students: state.students,
+                    subjects: state.subjects,
+                    attendanceRecords: state.attendanceRecords,
+                    calendar: state.calendar,
+                    settings: state.settings,
+                };
+                // Evaluate explicit checking for UTF-8 characters if needed, but for now simple btoa
+                // Use Buffer or unicode safe encoding if Japanese characters are involved (yes they are!).
+                // simple btoa on UTF-16 string might break.
+                // Better to use: btoa(unescape(encodeURIComponent(JSON.stringify(data))))
+                return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+            },
+
+            importData: (code) => {
+                try {
+                    const json = decodeURIComponent(escape(atob(code)));
+                    const data = JSON.parse(json);
+                    // Validate basic structure?
+                    if (!data.students || !data.settings) throw new Error("Invalid Format");
+
+                    set({
+                        students: data.students,
+                        subjects: data.subjects,
+                        attendanceRecords: data.attendanceRecords,
+                        calendar: data.calendar,
+                        settings: data.settings
+                    });
+                    // Force persist? persist middleware handles set.
+                    return true;
+                } catch (e) {
+                    console.error(e);
+                    return false;
+                }
+            },
         }),
         {
             name: 'attendance-storage',

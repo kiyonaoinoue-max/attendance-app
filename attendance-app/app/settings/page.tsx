@@ -4,15 +4,17 @@ import { useStore } from '@/store/useStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { CalendarDay } from '@/types';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function SettingsPage() {
-    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday } = useStore();
+    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, exportData, importData } = useStore();
     const [mounted, setMounted] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
+    const [syncCode, setSyncCode] = useState('');
 
     useEffect(() => {
         setMounted(true);
@@ -171,6 +173,55 @@ export default function SettingsPage() {
                             })()}
                         </div>
                     )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>データ同期（バックアップ・引き継ぎ）</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                        このコードを使って、他のブラウザや端末にデータを引き継ぐことができます。<br />
+                        ※ インポートすると、現在のデータは全て上書きされますのでご注意ください。
+                    </p>
+                    <div className="space-y-2">
+                        <Textarea
+                            placeholder="ここに同期コードが表示されます / 入力してください"
+                            value={syncCode}
+                            onChange={(e) => setSyncCode(e.target.value)}
+                            className="font-mono text-xs min-h-[100px]"
+                        />
+                    </div>
+                    <div className="flex gap-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                const code = exportData();
+                                setSyncCode(code);
+                                navigator.clipboard.writeText(code).then(() => alert('コードをコピーしました'));
+                            }}
+                        >
+                            データをエクスポート（コピー）
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            className="bg-red-100 hover:bg-red-200 text-red-700 border-red-200"
+                            onClick={() => {
+                                if (!syncCode) return alert('コードを入力してください');
+                                if (confirm('現在のデータが全て上書きされます。よろしいですか？')) {
+                                    if (importData(syncCode)) {
+                                        alert('インポートが完了しました。ページを再読み込みします。');
+                                        window.location.reload();
+                                    } else {
+                                        alert('インポートに失敗しました。コードが正しいか確認してください。');
+                                    }
+                                }
+                            }}
+                        >
+                            データをインポート（上書き）
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
         </div>

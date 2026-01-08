@@ -32,5 +32,6 @@ export interface AppSettings {
   termEndDate: string;
   firstTerm: { start: string; end: string };
   secondTerm: { start: string; end: string };
-  timetable: Record<string, string>; // Key: "dayIndex-period" (e.g. "1-1" for Mon 1st period), Value: subjectId
+  firstTermTimetable: Record<string, string>; // 前期時間割
+  secondTermTimetable: Record<string, string>; // 後期時間割
 }
