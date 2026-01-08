@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { CloudUpload, CloudDownload, Copy, CheckCircle2 } from 'lucide-react';
 import { CalendarDay } from '@/types';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -15,6 +16,10 @@ export default function SettingsPage() {
     const [mounted, setMounted] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
     const [syncCode, setSyncCode] = useState('');
+    const [cloudCode, setCloudCode] = useState<string | null>(null);
+    const [cloudExpiresAt, setCloudExpiresAt] = useState<number | null>(null);
+    const [importCloudCode, setImportCloudCode] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -176,9 +181,118 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+
+
+            <Card className="border-blue-200 bg-blue-50/30">
                 <CardHeader>
-                    <CardTitle>データ同期（バックアップ・引き継ぎ）</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                        <CloudUpload className="h-5 w-5 text-blue-600" />
+                        かんたんクラウド同期（推奨）
+                    </CardTitle>
+                    <CardDescription>
+                        一時発行される「合言葉」を使って、手軽にデータを他の端末に移動できます。
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {/* Export Section */}
+                    <div className="space-y-2">
+                        <h3 className="text-sm font-bold text-slate-700">データを送る（発行）</h3>
+                        <div className="flex items-start gap-4">
+                            <Button
+                                onClick={async () => {
+                                    setIsLoading(true);
+                                    try {
+                                        const data = exportData();
+                                        const res = await fetch('/api/sync/store', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ data }) // data is already base64 string
+                                        });
+                                        const json = await res.json();
+                                        if (res.ok) {
+                                            setCloudCode(json.code);
+                                            setCloudExpiresAt(Date.now() + (json.expiresIn * 1000));
+                                        } else {
+                                            alert('エラーが発生しました: ' + (json.error || 'Unknown error'));
+                                        }
+                                    } catch (e) {
+                                        alert('通信エラーが発生しました');
+                                    } finally {
+                                        setIsLoading(false);
+                                    }
+                                }}
+                                disabled={isLoading}
+                                className="bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]"
+                            >
+                                {isLoading ? '発行中...' : '合言葉を発行'}
+                            </Button>
+
+                            {cloudCode && (
+                                <div className="flex-1 bg-white p-4 rounded-lg border-2 border-blue-200 shadow-sm animate-in fade-in zoom-in">
+                                    <div className="text-xs text-slate-500 mb-1">この合言葉を別の端末で入力してください</div>
+                                    <div className="text-3xl font-extrabold tracking-widest text-slate-900 mb-2 select-all">
+                                        {cloudCode}
+                                    </div>
+                                    <div className="text-xs text-red-500 font-bold">
+                                        有効期限: 1時間
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="h-px bg-slate-200" />
+
+                    {/* Import Section */}
+                    <div className="space-y-2">
+                        <h3 className="text-sm font-bold text-slate-700">データを受け取る（入力）</h3>
+                        <div className="flex gap-2 max-w-sm">
+                            <Input
+                                placeholder="6桁の合言葉を入力"
+                                value={importCloudCode}
+                                onChange={(e) => setImportCloudCode(e.target.value)}
+                                className="font-mono text-lg tracking-widest text-center"
+                                maxLength={6}
+                            />
+                            <Button
+                                onClick={async () => {
+                                    if (importCloudCode.length !== 6) return alert('6桁のコードを入力してください');
+                                    setIsLoading(true);
+                                    try {
+                                        const res = await fetch(`/api/sync/retrieve?code=${importCloudCode}`);
+                                        const json = await res.json();
+                                        if (res.ok && json.data) {
+                                            if (confirm('現在のデータが上書きされます。よろしいですか？')) {
+                                                if (importData(json.data)) {
+                                                    alert('同期が完了しました！');
+                                                    setImportCloudCode('');
+                                                    window.location.reload();
+                                                } else {
+                                                    alert('データの読み込みに失敗しました。');
+                                                }
+                                            }
+                                        } else {
+                                            alert('エラー: ' + (json.error || 'データの取得に失敗しました'));
+                                        }
+                                    } catch (e) {
+                                        alert('通信エラーが発生しました');
+                                    } finally {
+                                        setIsLoading(false);
+                                    }
+                                }}
+                                disabled={isLoading}
+                                variant="secondary"
+                            >
+                                受取
+                            </Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="opacity-80">
+                <CardHeader>
+                    <CardTitle className="text-base text-slate-600">オフライン転送（旧方式）</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
@@ -224,6 +338,6 @@ export default function SettingsPage() {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }
