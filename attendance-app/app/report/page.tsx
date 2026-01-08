@@ -66,7 +66,11 @@ export default function ReportPage() {
 
         // Cumulative Hours
         let subjectHours: Record<string, number> = {};
-        subjects.forEach(s => subjectHours[s.id] = 0);
+        let subjectHeldHours: Record<string, number> = {};
+        subjects.forEach(s => {
+            subjectHours[s.id] = 0;
+            subjectHeldHours[s.id] = 0;
+        });
 
         validDays.forEach(d => {
             const dStr = format(d, 'yyyy-MM-dd');
@@ -81,6 +85,9 @@ export default function ReportPage() {
                 const key = `${dayIndex}-${period}`;
                 const subjectId = timetable?.[key];
                 if (subjectId) {
+                    // Increment Held Hours (scheduled)
+                    subjectHeldHours[subjectId] = (subjectHeldHours[subjectId] || 0) + 1.8;
+
                     const record = attendanceRecords.find(r => r.studentId === studentId && r.date === dStr && r.period === period);
                     const isAbsent = record?.status === 'absent';
                     if (!isAbsent) subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
@@ -95,6 +102,7 @@ export default function ReportPage() {
         // Round subject hours to 1 decimal place
         Object.keys(subjectHours).forEach(key => {
             subjectHours[key] = Math.round(subjectHours[key] * 10) / 10;
+            subjectHeldHours[key] = Math.round(subjectHeldHours[key] * 10) / 10;
         });
 
         return {
@@ -102,6 +110,7 @@ export default function ReportPage() {
             present: presentCount,
             total: totalSlots,
             subjectHours,
+            subjectHeldHours,
             late,
             early
         };
@@ -119,7 +128,7 @@ export default function ReportPage() {
                         <th className="border p-2 text-orange-600">早退</th>
                         {subjects.map(s => (
                             <th key={s.id} className="border p-2 min-w-[120px]">
-                                {s.name}<br /><span className="text-xs font-normal">履修/必須</span>
+                                {s.name}<br /><span className="text-xs font-normal">出席/履修</span>
                             </th>
                         ))}
                     </tr>
@@ -139,12 +148,12 @@ export default function ReportPage() {
                                 <td className="border p-2">{stat.early}</td>
                                 {subjects.map(s => {
                                     const current = stat.subjectHours[s.id] || 0;
-                                    const diff = s.requiredHours - current;
+                                    const held = stat.subjectHeldHours[s.id] || 0;
                                     return (
                                         <td key={s.id} className="border p-2">
                                             <div className="flex justify-between">
                                                 <span>{current.toFixed(1)}h</span>
-                                                <span className="text-slate-400">/ {s.requiredHours}h</span>
+                                                <span className="text-slate-400">/ {held.toFixed(1)}h</span>
                                             </div>
                                         </td>
                                     );
@@ -165,13 +174,13 @@ export default function ReportPage() {
 
         const createSheet = (sheetName: string, start: Date, end: Date) => {
             const data: (string | number)[][] = [
-                ['学籍番号', '氏名', 'クラス', `出席率(%)`, '遅刻', '早退', ...subjects.map(s => `${s.name} (履修/必須)`)]
+                ['学籍番号', '氏名', 'クラス', `出席率(%)`, '遅刻', '早退', ...subjects.map(s => `${s.name} (出席/履修)`)]
             ];
             students.forEach(s => {
                 const stat = calcStats(s.id, start, end);
                 data.push([
                     s.studentNumber, s.name, s.className, `${stat.rate}%`, stat.late, stat.early,
-                    ...subjects.map(subj => `${(stat.subjectHours[subj.id] || 0).toFixed(1)} / ${subj.requiredHours}`)
+                    ...subjects.map(subj => `${(stat.subjectHours[subj.id] || 0).toFixed(1)} / ${(stat.subjectHeldHours[subj.id] || 0).toFixed(1)}`)
                 ]);
             });
             const ws = utils.aoa_to_sheet(data);
