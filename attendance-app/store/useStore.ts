@@ -26,7 +26,10 @@ interface AppState {
     toggleHoliday: (date: string) => void;
 
     exportData: () => string;
-    importData: (code: string) => boolean;
+    importData: (json: string) => boolean;
+    syncCode: string | null;
+    syncExpiresAt: number | null;
+    setSyncState: (code: string | null, expiresAt: number | null) => void;
 }
 
 const DEFAULT_STATUS_CYCLE: AttendanceStatus[] = ['present', 'absent', 'late', 'early_leave'];
@@ -52,6 +55,8 @@ export const useStore = create<AppState>()(
                 firstTermTimetable: {},
                 secondTermTimetable: {},
             },
+            syncCode: null,
+            syncExpiresAt: null,
 
             addStudent: (student) => set((state) => ({
                 students: [
@@ -171,6 +176,7 @@ export const useStore = create<AppState>()(
                     return false;
                 }
             },
+            setSyncState: (code, expiresAt) => set({ syncCode: code, syncExpiresAt: expiresAt }),
         }),
         {
             name: 'attendance-storage',

@@ -12,7 +12,7 @@ import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function SettingsPage() {
-    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, exportData, importData } = useStore();
+    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, exportData, importData, setSyncState, syncCode: globalSyncCode, syncExpiresAt } = useStore();
     const [mounted, setMounted] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
     const [syncCode, setSyncCode] = useState('');
@@ -23,7 +23,35 @@ export default function SettingsPage() {
 
     useEffect(() => {
         setMounted(true);
-    }, []);
+        // Load initial state from store if valid
+        if (globalSyncCode && syncExpiresAt && syncExpiresAt > Date.now()) {
+            setCloudCode(globalSyncCode);
+            setCloudExpiresAt(syncExpiresAt);
+        }
+    }, [globalSyncCode, syncExpiresAt]);
+
+    const [remainingTime, setRemainingTime] = useState<string>("");
+
+    useEffect(() => {
+        if (!cloudExpiresAt) {
+            setRemainingTime("");
+            return;
+        }
+        const timer = setInterval(() => {
+            const diff = Math.floor((cloudExpiresAt - Date.now()) / 1000);
+            if (diff <= 0) {
+                setRemainingTime("");
+                setCloudCode(null);
+                setCloudExpiresAt(null);
+                setSyncState(null, null); // Clear global state
+            } else {
+                const m = Math.floor(diff / 60);
+                const s = diff % 60;
+                setRemainingTime(`${m}分${s.toString().padStart(2, '0')}秒`);
+            }
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [cloudExpiresAt, setSyncState]);
 
     if (!mounted) return null;
 
@@ -212,6 +240,7 @@ export default function SettingsPage() {
                                         if (res.ok) {
                                             setCloudCode(json.code);
                                             setCloudExpiresAt(Date.now() + (json.expiresIn * 1000));
+                                            setSyncState(json.code, Date.now() + (json.expiresIn * 1000));
                                         } else {
                                             alert('エラーが発生しました: ' + (json.error || 'Unknown error'));
                                         }
@@ -234,7 +263,7 @@ export default function SettingsPage() {
                                         {cloudCode}
                                     </div>
                                     <div className="text-xs text-red-500 font-bold">
-                                        有効期限: 1時間
+                                        有効期限: {remainingTime}
                                     </div>
                                 </div>
                             )}
@@ -292,7 +321,7 @@ export default function SettingsPage() {
 
             <Card className="opacity-80">
                 <CardHeader>
-                    <CardTitle className="text-base text-slate-600">オフライン転送（旧方式）</CardTitle>
+                    <CardTitle className="text-base text-slate-600">オフライン・バックアップ（旧方式）</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
