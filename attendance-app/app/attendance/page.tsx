@@ -256,6 +256,19 @@ export default function AttendancePage() {
                                     </button>
                                 );
                             })}
+
+                            {/* Reset Button */}
+                            <button
+                                onClick={() => {
+                                    if (!selectedStudentId) return;
+                                    toggleAttendance(selectedStudentId, date, period, null);
+                                    // No auto-advance for reset, as it might be a correction
+                                }}
+                                className="flex items-center gap-3 p-3 rounded-lg border-2 border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all active:scale-95 mt-2"
+                            >
+                                <Minus className="h-6 w-6" />
+                                <span className="font-bold">未入力に戻す</span>
+                            </button>
                         </div>
 
                         <div className="text-xs text-center text-slate-400 mt-4">

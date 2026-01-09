@@ -19,7 +19,7 @@ interface AppState {
     updateSubject: (id: string, data: Partial<Subject>) => void;
     deleteSubject: (id: string) => void;
 
-    toggleAttendance: (studentId: string, date: string, period: number, status?: AttendanceStatus) => void;
+    toggleAttendance: (studentId: string, date: string, period: number, status?: AttendanceStatus | null) => void;
 
     updateSettings: (settings: Partial<AppSettings>) => void;
     generateCalendar: (start: string, end: string) => void;
@@ -97,7 +97,10 @@ export const useStore = create<AppState>()(
 
                 let newStatus: AttendanceStatus;
 
-                if (status) {
+                if (status === null) {
+                    // Explicitly clear the status (remove record)
+                    newStatus = null as any; // Marker to filter out
+                } else if (status) {
                     // Specific status requested
                     newStatus = status;
                 } else if (record) {
@@ -116,10 +119,12 @@ export const useStore = create<AppState>()(
 
                 // Always keep the record to distinguish touched vs untouched
                 return {
-                    attendanceRecords: [
-                        ...otherRecords,
-                        { studentId, date, period, status: newStatus }
-                    ]
+                    attendanceRecords: status === null
+                        ? otherRecords
+                        : [
+                            ...otherRecords,
+                            { studentId, date, period, status: newStatus }
+                        ]
                 };
             }),
 
