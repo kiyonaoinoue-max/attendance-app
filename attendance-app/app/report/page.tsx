@@ -44,7 +44,10 @@ export default function ReportPage() {
         today.setHours(23, 59, 59, 999);
 
         const effectiveEnd = end > today ? today : end;
-        const validDays = getValidDays(start, effectiveEnd);
+        let validDays = getValidDays(start, effectiveEnd);
+
+        // Filter out "Pre-history" days (days before first app usage) from denominator
+        validDays = validDays.filter(d => format(d, 'yyyy-MM-dd') >= minRecordDate);
 
         // Attendance Rate (4 periods only)
         const totalSlots = validDays.length * 4;
