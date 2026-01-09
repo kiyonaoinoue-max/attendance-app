@@ -128,7 +128,7 @@ export default function ReportPage() {
                         <th className="border p-2 text-orange-600">早退</th>
                         {subjects.map(s => (
                             <th key={s.id} className="border p-2 min-w-[120px]">
-                                {s.name}<br /><span className="text-xs font-normal">出席/履修</span>
+                                {s.name}<br /><span className="text-xs font-normal">出席/必須</span>
                             </th>
                         ))}
                     </tr>
@@ -148,12 +148,11 @@ export default function ReportPage() {
                                 <td className="border p-2">{stat.early}</td>
                                 {subjects.map(s => {
                                     const current = stat.subjectHours[s.id] || 0;
-                                    const held = stat.subjectHeldHours[s.id] || 0;
                                     return (
                                         <td key={s.id} className="border p-2">
                                             <div className="flex justify-between">
                                                 <span>{current.toFixed(1)}h</span>
-                                                <span className="text-slate-400">/ {held.toFixed(1)}h</span>
+                                                <span className="text-slate-400">/ {s.requiredHours}h</span>
                                             </div>
                                         </td>
                                     );
@@ -174,13 +173,13 @@ export default function ReportPage() {
 
         const createSheet = (sheetName: string, start: Date, end: Date) => {
             const data: (string | number)[][] = [
-                ['学籍番号', '氏名', 'クラス', `出席率(%)`, '遅刻', '早退', ...subjects.map(s => `${s.name} (出席/履修)`)]
+                ['学籍番号', '氏名', 'クラス', `出席率(%)`, '遅刻', '早退', ...subjects.map(s => `${s.name} (出席/必須)`)]
             ];
             students.forEach(s => {
                 const stat = calcStats(s.id, start, end);
                 data.push([
                     s.studentNumber, s.name, s.className, `${stat.rate}%`, stat.late, stat.early,
-                    ...subjects.map(subj => `${(stat.subjectHours[subj.id] || 0).toFixed(1)} / ${(stat.subjectHeldHours[subj.id] || 0).toFixed(1)}`)
+                    ...subjects.map(subj => `${(stat.subjectHours[subj.id] || 0).toFixed(1)} / ${subj.requiredHours}`)
                 ]);
             });
             const ws = utils.aoa_to_sheet(data);
