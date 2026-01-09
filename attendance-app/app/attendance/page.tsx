@@ -106,7 +106,13 @@ export default function AttendancePage() {
                     {PERIODS.map((p) => (
                         <button
                             key={p.id}
-                            onClick={() => setPeriod(p.id)}
+                            onClick={() => {
+                                setPeriod(p.id);
+                                if (students.length > 0) {
+                                    setSelectedStudentId(students[0].id);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                            }}
                             className={cn(
                                 "flex-1 min-w-[60px] py-2 px-4 rounded-lg text-sm font-bold transition-all border-2",
                                 period === p.id
