@@ -12,7 +12,7 @@ import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function SettingsPage() {
-    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, exportData, importData, setSyncState, syncCode: globalSyncCode, syncExpiresAt } = useStore();
+    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, exportData, importData, setSyncState, syncCode: globalSyncCode, syncExpiresAt, lastSyncTime, setLastSyncTime } = useStore();
     const [mounted, setMounted] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
     const [syncCode, setSyncCode] = useState('');
@@ -213,13 +213,22 @@ export default function SettingsPage() {
 
             <Card className="border-blue-200 bg-blue-50/30">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <CloudUpload className="h-5 w-5 text-blue-600" />
-                        かんたんクラウド同期（推奨）
-                    </CardTitle>
-                    <CardDescription>
-                        一時発行される「合言葉」を使って、手軽にデータを他の端末に移動できます。
-                    </CardDescription>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <CloudUpload className="h-5 w-5 text-blue-600" />
+                                かんたんクラウド同期（推奨）
+                            </CardTitle>
+                            <CardDescription>
+                                一時発行される「合言葉」を使って、手軽にデータを他の端末に移動できます。
+                            </CardDescription>
+                        </div>
+                        {lastSyncTime && (
+                            <div className="text-xs text-muted-foreground bg-slate-100 px-3 py-1 rounded-full border">
+                                最終同期: {format(lastSyncTime, 'yyyy/MM/dd HH:mm')}
+                            </div>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Export Section */}
@@ -241,6 +250,7 @@ export default function SettingsPage() {
                                             setCloudCode(json.code);
                                             setCloudExpiresAt(Date.now() + (json.expiresIn * 1000));
                                             setSyncState(json.code, Date.now() + (json.expiresIn * 1000));
+                                            setLastSyncTime(Date.now());
                                         } else {
                                             alert('エラーが発生しました: ' + (json.error || 'Unknown error'));
                                         }
@@ -293,6 +303,7 @@ export default function SettingsPage() {
                                         if (res.ok && json.data) {
                                             if (confirm('現在のデータが上書きされます。よろしいですか？')) {
                                                 if (importData(json.data)) {
+                                                    setLastSyncTime(Date.now());
                                                     alert('同期が完了しました！');
                                                     setImportCloudCode('');
                                                     window.location.reload();
@@ -354,6 +365,7 @@ export default function SettingsPage() {
                                 if (!syncCode) return alert('コードを入力してください');
                                 if (confirm('現在のデータが全て上書きされます。よろしいですか？')) {
                                     if (importData(syncCode)) {
+                                        setLastSyncTime(Date.now());
                                         alert('インポートが完了しました。ページを再読み込みします。');
                                         window.location.reload();
                                     } else {

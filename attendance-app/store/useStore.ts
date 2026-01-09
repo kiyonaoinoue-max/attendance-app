@@ -30,6 +30,8 @@ interface AppState {
     syncCode: string | null;
     syncExpiresAt: number | null;
     setSyncState: (code: string | null, expiresAt: number | null) => void;
+    lastSyncTime: number | null;
+    setLastSyncTime: (time: number) => void;
 }
 
 const DEFAULT_STATUS_CYCLE: AttendanceStatus[] = ['present', 'absent', 'late', 'early_leave'];
@@ -57,6 +59,7 @@ export const useStore = create<AppState>()(
             },
             syncCode: null,
             syncExpiresAt: null,
+            lastSyncTime: null,
 
             addStudent: (student) => set((state) => ({
                 students: [
@@ -177,6 +180,7 @@ export const useStore = create<AppState>()(
                 }
             },
             setSyncState: (code, expiresAt) => set({ syncCode: code, syncExpiresAt: expiresAt }),
+            setLastSyncTime: (time) => set({ lastSyncTime: time }),
         }),
         {
             name: 'attendance-storage',
