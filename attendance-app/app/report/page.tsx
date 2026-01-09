@@ -20,6 +20,12 @@ export default function ReportPage() {
     if (!mounted) return null;
 
     // --- Logic ---
+    // Find the earliest record date to prevent "Ghost Attendance" in past
+    const sortedRecordDates = attendanceRecords
+        .map(r => r.date)
+        .sort((a, b) => a.localeCompare(b));
+    const minRecordDate = sortedRecordDates.length > 0 ? sortedRecordDates[0] : format(new Date(), 'yyyy-MM-dd');
+
     const getValidDays = (start: Date, end: Date) => {
         if (start > end) return [];
         const days = eachDayOfInterval({ start, end });
@@ -85,12 +91,21 @@ export default function ReportPage() {
                 const key = `${dayIndex}-${period}`;
                 const subjectId = timetable?.[key];
                 if (subjectId) {
-                    // Increment Held Hours (scheduled)
-                    subjectHeldHours[subjectId] = (subjectHeldHours[subjectId] || 0) + 1.8;
-
                     const record = attendanceRecords.find(r => r.studentId === studentId && r.date === dStr && r.period === period);
-                    const isAbsent = record?.status === 'absent';
-                    if (!isAbsent) subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
+
+                    if (record) {
+                        // Explicit record exists
+                        if (record.status !== 'absent') {
+                            subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
+                        }
+                    } else {
+                        // No record (Implied Input)
+                        // ONLY count as present if date is ON or AFTER the first ever app usage
+                        // This prevents counting pre-history dates as present
+                        if (dStr >= minRecordDate) {
+                            subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
+                        }
+                    }
                 }
             });
         });
