@@ -230,6 +230,73 @@ export default function ReportPage() {
     const monthStart = new Date(y, m - 1, 1);
     const monthEnd = new Date(y, m, 0);
 
+    // --- Yearly Rate Logic ---
+    const renderYearlyTrend = () => {
+        // Generate months: Apr of Current Year -> Mar of Next Year
+        const today = new Date();
+        const currentYear = today.getMonth() < 3 ? today.getFullYear() - 1 : today.getFullYear(); // School year starts in April
+
+        const months = [];
+        for (let i = 0; i < 12; i++) {
+            months.push(new Date(currentYear, 3 + i, 1)); // Apr is 3
+        }
+
+        return (
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse border border-slate-200">
+                    <thead className="bg-slate-100">
+                        <tr>
+                            <th className="border p-2 sticky left-0 bg-slate-100 z-10">氏名</th>
+                            {months.map(m => (
+                                <th key={m.toString()} className="border p-2 min-w-[60px] text-center">
+                                    {m.getMonth() + 1}月
+                                </th>
+                            ))}
+                            <th className="border p-2 bg-slate-200">年間Avg</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {students.map(student => {
+                            let totalPresent = 0;
+                            let totalSlots = 0;
+
+                            const monthlyRates = months.map(m => {
+                                const start = startOfMonth(m);
+                                const end = endOfMonth(m);
+                                // Reuse calcStats
+                                const stat = calcStats(student.id, start, end);
+
+                                // Accumulate for yearly avg (only if valid slots exist)
+                                if (stat.total > 0) {
+                                    totalPresent += stat.present;
+                                    totalSlots += stat.total;
+                                }
+
+                                return stat.total > 0 ? stat.rate : '-';
+                            });
+
+                            const yearlyRate = totalSlots > 0 ? ((totalPresent / totalSlots) * 100).toFixed(1) : '-';
+
+                            return (
+                                <tr key={student.id} className="border-t hover:bg-slate-50">
+                                    <td className="border p-2 font-medium sticky left-0 bg-white z-10">{student.name}</td>
+                                    {monthlyRates.map((rate, i) => (
+                                        <td key={i} className="border p-2 text-center text-xs">
+                                            {rate === '-' ? <span className="text-slate-300">-</span> : `${rate}%`}
+                                        </td>
+                                    ))}
+                                    <td className="border p-2 text-center font-bold bg-slate-50">
+                                        {yearlyRate !== '-' ? `${yearlyRate}%` : '-'}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -245,11 +312,12 @@ export default function ReportPage() {
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="month">
-                        <TabsList className="grid w-full grid-cols-4 mb-4">
+                        <TabsList className="grid w-full grid-cols-5 mb-4">
                             <TabsTrigger value="month">月別 ({targetMonth})</TabsTrigger>
                             <TabsTrigger value="first">前期</TabsTrigger>
                             <TabsTrigger value="second">後期</TabsTrigger>
                             <TabsTrigger value="year">年間</TabsTrigger>
+                            <TabsTrigger value="trend">出席率推移</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="month">
@@ -302,6 +370,13 @@ export default function ReportPage() {
                                     年間期間を計算できません。「設定」画面で前期・後期の期間を設定してください。
                                 </div>
                             )}
+                        </TabsContent>
+
+                        <TabsContent value="trend">
+                            <div className="mb-4 font-bold text-center">
+                                年間出席率推移 (4月〜翌3月)
+                            </div>
+                            {renderYearlyTrend()}
                         </TabsContent>
                     </Tabs>
                 </CardContent>

@@ -2,7 +2,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useStore } from '@/store/useStore';
 import Link from 'next/link';
-import { CalendarCheck, Users, BookOpen } from 'lucide-react';
+import { CalendarCheck, Users, BookOpen, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
@@ -116,7 +116,11 @@ export default function Home() {
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4 text-slate-800">クイックアクション</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Changed to 2 columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link href="/attendance-list" className="block p-6 bg-purple-100 border-2 border-purple-200 rounded-lg text-purple-700 text-center font-bold hover:bg-white hover:border-purple-300 transition flex items-center justify-center gap-2">
+            <CalendarDays className="w-5 h-5" />
+            <span>出席一覧 (月間)</span>
+          </Link>
           <Link href="/attendance" className="block p-6 bg-slate-100 border-2 border-slate-200 rounded-lg text-slate-600 text-center font-bold hover:bg-white hover:border-slate-300 transition flex items-center justify-center gap-2">
             <span>📅</span> 過去の出席を修正
           </Link>
