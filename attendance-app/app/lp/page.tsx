@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Download, Zap, Users, GraduationCap, Cloud, FileSpreadsheet, Lock, ExternalLink, ArrowRight, Menu } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { Check, Download, Zap, Users, GraduationCap, Cloud, FileSpreadsheet, Lock, ExternalLink, ArrowRight, Menu, LayoutDashboard, CalendarCheck, Settings, PieChart } from 'lucide-react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { useRef, useState } from 'react';
 
 export default function LandingPage() {
     const targetRef = useRef<HTMLDivElement>(null);
@@ -16,6 +16,16 @@ export default function LandingPage() {
     // 画像が見え始めたらズームアウトし始める
     const scale = useTransform(scrollYProgress, [0, 0.5], [1.1, 1]);
     const opacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
+
+    const [activeTab, setActiveTab] = useState("dashboard");
+
+    const previews = [
+        { id: "dashboard", label: "ダッシュボード", icon: <LayoutDashboard className="w-4 h-4" />, src: "/dashboard-preview.png" },
+        { id: "attendance", label: "出席入力", icon: <CalendarCheck className="w-4 h-4" />, src: "/preview-attendance.png" },
+        { id: "students", label: "学生管理", icon: <Users className="w-4 h-4" />, src: "/preview-students.png" },
+        { id: "report", label: "集計・レポート", icon: <PieChart className="w-4 h-4" />, src: "/preview-report.png" },
+        { id: "settings", label: "設定・同期", icon: <Settings className="w-4 h-4" />, src: "/preview-settings.png" },
+    ];
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -78,20 +88,43 @@ export default function LandingPage() {
                         </Button>
                     </div>
 
-                    {/* App Preview Mockup */}
-                    <div className="mt-20 relative max-w-5xl mx-auto" ref={targetRef}>
+                    {/* App Preview Mockup Tabs */}
+                    <div className="mt-16 flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+                        {previews.map((preview) => (
+                            <button
+                                key={preview.id}
+                                onClick={() => setActiveTab(preview.id)}
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === preview.id
+                                        ? "bg-slate-900 text-white shadow-lg scale-105"
+                                        : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                    }`}
+                            >
+                                {preview.icon}
+                                <span>{preview.label}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* App Preview Mockup Image */}
+                    <div className="mt-8 relative max-w-5xl mx-auto" ref={targetRef}>
                         <motion.div
                             style={{ scale, opacity }}
                             className="relative rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-900/10"
                         >
                             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-20"></div>
-                            <div className="relative rounded-xl bg-slate-50 overflow-hidden border border-slate-200 aspect-[16/10] flex items-center justify-center">
-                                {/* App Screenshot */}
-                                <img
-                                    src="/dashboard-preview.png"
-                                    alt="Daily Attendance Pro Dashboard"
-                                    className="w-full h-full object-cover"
-                                />
+                            <div className="relative rounded-xl bg-slate-50 overflow-hidden border border-slate-200 aspect-[16/10] flex items-center justify-center bg-white">
+                                <AnimatePresence mode="wait">
+                                    <motion.img
+                                        key={activeTab}
+                                        src={previews.find(p => p.id === activeTab)?.src}
+                                        alt={previews.find(p => p.id === activeTab)?.label}
+                                        className="w-full h-full object-cover"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ duration: 0.2 }}
+                                    />
+                                </AnimatePresence>
                             </div>
                         </motion.div>
                     </div>
