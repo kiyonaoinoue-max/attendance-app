@@ -70,14 +70,12 @@ export default function LandingPage() {
                         <div className="relative rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-900/10">
                             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-20"></div>
                             <div className="relative rounded-xl bg-slate-50 overflow-hidden border border-slate-200 aspect-[16/10] flex items-center justify-center">
-                                {/* Placeholder for App Screenshot */}
-                                <div className="text-center p-8">
-                                    <div className="w-20 h-20 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-indigo-600">
-                                        <Check className="w-10 h-10" />
-                                    </div>
-                                    <p className="text-slate-400 font-medium">Coming Soon: App Screenshot</p>
-                                    <p className="text-xs text-slate-400 mt-2">実際のダッシュボード画面が表示されます</p>
-                                </div>
+                                {/* App Screenshot */}
+                                <img
+                                    src="/dashboard-preview.png"
+                                    alt="Daily Attendance Pro Dashboard"
+                                    className="w-full h-full object-cover"
+                                />
                             </div>
                         </div>
                     </div>
