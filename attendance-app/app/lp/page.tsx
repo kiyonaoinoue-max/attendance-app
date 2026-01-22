@@ -48,7 +48,7 @@ export default function LandingPage() {
                         </span>
                     </h1>
                     <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        <span className="block font-bold text-slate-800 mb-2">「50名の出席確認が、10秒で完了」</span>
+                        <span className="block font-bold text-slate-800 mb-2">「50名の出席確認が、最短30秒でも完了」</span>
                         複雑な操作は一切不要。毎日のルーチンワークを劇的に効率化します。<br className="hidden md:block" />
                         タブレット一台で、クラス全員の状況を一目で把握。
                     </p>
