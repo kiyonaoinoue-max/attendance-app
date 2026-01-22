@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { kv } from '@vercel/kv';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -10,25 +10,18 @@ export async function GET(request: Request) {
     }
 
     try {
-        const connectionString = process.env.KV_REDIS_URL || process.env.KV_URL || process.env.REDIS_URL;
-        if (!connectionString) {
-            throw new Error('Missing Redis connection string (KV_REDIS_URL)');
-        }
-
-        const redis = new Redis(connectionString);
-        const dataStr = await redis.get(`sync:${code}`);
-        await redis.quit();
+        const dataStr = await kv.get<string>(`sync:${code}`);
 
         if (!dataStr) {
             return NextResponse.json({ error: 'Invalid code or expired' }, { status: 404 });
         }
 
         // Parse JSON if stored as string
-        const data = JSON.parse(dataStr);
+        const data = typeof dataStr === 'string' ? JSON.parse(dataStr) : dataStr;
 
         return NextResponse.json({ data });
     } catch (error) {
-        console.error(error);
+        console.error('Sync retrieve error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
