@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -10,7 +10,17 @@ export async function GET(request: Request) {
     }
 
     try {
-        const dataStr = await kv.get<string>(`sync:${code}`);
+        // Get connection info from environment
+        const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+        const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+        if (!url || !token) {
+            console.error('Missing Redis REST API credentials');
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+        }
+
+        const redis = new Redis({ url, token });
+        const dataStr = await redis.get<string>(`sync:${code}`);
 
         if (!dataStr) {
             return NextResponse.json({ error: 'Invalid code or expired' }, { status: 404 });
