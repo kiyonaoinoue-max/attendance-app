@@ -2,8 +2,21 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Download, Zap, Users, GraduationCap, Cloud, FileSpreadsheet, Lock, ExternalLink, ArrowRight, Menu } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 
 export default function LandingPage() {
+    const targetRef = useRef<HTMLDivElement>(null);
+    const { scrollYProgress } = useScroll({
+        target: targetRef,
+        offset: ["start end", "end start"]
+    });
+
+    // スクロールに応じてスケールを変化させる (1.1 -> 1.0)
+    // 画像が見え始めたらズームアウトし始める
+    const scale = useTransform(scrollYProgress, [0, 0.5], [1.1, 1]);
+    const opacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             {/* Navigation */}
@@ -66,8 +79,11 @@ export default function LandingPage() {
                     </div>
 
                     {/* App Preview Mockup */}
-                    <div className="mt-20 relative max-w-5xl mx-auto">
-                        <div className="relative rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-900/10">
+                    <div className="mt-20 relative max-w-5xl mx-auto" ref={targetRef}>
+                        <motion.div
+                            style={{ scale, opacity }}
+                            className="relative rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-900/10"
+                        >
                             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-20"></div>
                             <div className="relative rounded-xl bg-slate-50 overflow-hidden border border-slate-200 aspect-[16/10] flex items-center justify-center">
                                 {/* App Screenshot */}
@@ -77,7 +93,7 @@ export default function LandingPage() {
                                     className="w-full h-full object-cover"
                                 />
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </section>
