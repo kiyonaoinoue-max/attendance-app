@@ -98,8 +98,13 @@ export default function LandingPage() {
                         {[
                             {
                                 icon: <GraduationCap className="h-6 w-6" />,
-                                title: "2年制カリキュラム",
-                                description: "1年次・2年次の進級に合わせて、教科や学生データをスムーズに引き継げます。",
+                                title: "特殊な時間計算に対応",
+                                description: (
+                                    <>
+                                        「1.8時間×4限＝7.2時間」など、専門学校特有の集計も完全自動化。<br />
+                                        <span className="text-xs text-slate-500 mt-2 block">※6限・8限対応版も開発中</span>
+                                    </>
+                                ),
                                 color: "bg-blue-100 text-blue-600"
                             },
                             {
