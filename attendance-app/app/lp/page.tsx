@@ -14,7 +14,7 @@ export default function LandingPage() {
                             <Check className="h-5 w-5 text-white" />
                         </div>
                         <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-                            Attendance App
+                            Daily Attendance Pro
                         </span>
                     </div>
                     <div className="hidden md:flex items-center space-x-6">

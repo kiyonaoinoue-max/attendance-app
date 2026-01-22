@@ -53,7 +53,7 @@ export default function Home() {
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 rounded-2xl blur-xl" />
         <div className="relative bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/50 shadow-lg">
           <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-            出席管理ダッシュボード
+            Daily Attendance Pro
           </h1>
           <p className="text-slate-500 mt-1">
             {format(new Date(), 'yyyy年MM月dd日 (EEEE)', { locale: ja })}

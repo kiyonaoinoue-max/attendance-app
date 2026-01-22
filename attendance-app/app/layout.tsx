@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: '自動車整備専門学校 出席管理',
-  description: '出席管理システム',
+  title: 'Daily Attendance Pro',
+  description: '先生のための、一番シンプルな出席管理アプリ',
 };
 
 export default function RootLayout({
