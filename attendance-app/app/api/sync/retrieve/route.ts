@@ -1,4 +1,4 @@
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -10,24 +10,33 @@ export async function GET(request: Request) {
     }
 
     try {
-        // Get connection info from environment
-        const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-        const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+        // Get Redis URL from environment
+        const redisUrl = process.env.KV_REDIS_URL;
 
-        if (!url || !token) {
-            console.error('Missing Redis REST API credentials');
+        if (!redisUrl) {
+            console.error('Missing KV_REDIS_URL environment variable');
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        const redis = new Redis({ url, token });
-        const dataStr = await redis.get<string>(`sync:${code}`);
+        // Connect with TLS enabled (required for Redis Cloud)
+        const redis = new Redis(redisUrl, {
+            tls: {
+                rejectUnauthorized: false
+            },
+            maxRetriesPerRequest: 3
+        });
+
+        const dataStr = await redis.get(`sync:${code}`);
+
+        // Close connection
+        await redis.quit();
 
         if (!dataStr) {
             return NextResponse.json({ error: 'Invalid code or expired' }, { status: 404 });
         }
 
-        // Parse JSON if stored as string
-        const data = typeof dataStr === 'string' ? JSON.parse(dataStr) : dataStr;
+        // Parse JSON
+        const data = JSON.parse(dataStr);
 
         return NextResponse.json({ data });
     } catch (error) {
