@@ -48,8 +48,9 @@ export default function LandingPage() {
                         </span>
                     </h1>
                     <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        複雑な機能はいりません。毎日の出席確認を、かつてないほどスムーズに。<br className="hidden md:block" />
-                        タブレット一台で、クラス全員の出席状況を一目で把握できます。
+                        <span className="block font-bold text-slate-800 mb-2">「50名の出席確認が、10秒で完了」</span>
+                        複雑な操作は一切不要。毎日のルーチンワークを劇的に効率化します。<br className="hidden md:block" />
+                        タブレット一台で、クラス全員の状況を一目で把握。
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Button asChild size="lg" className="h-12 px-8 text-lg bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all">
