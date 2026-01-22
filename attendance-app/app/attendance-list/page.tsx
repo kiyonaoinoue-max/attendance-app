@@ -9,6 +9,7 @@ import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+// ... imports
 import { AttendanceStatus } from '@/types';
 
 // Symbol mapping for "Paper Attendance Book" style
@@ -25,6 +26,7 @@ export default function AttendanceListPage() {
     const { students, attendanceRecords, calendar } = useStore();
     const [mounted, setMounted] = useState(false);
     const [targetMonth, setTargetMonth] = useState(new Date());
+    const [selectedGrade, setSelectedGrade] = useState<number>(1);
 
     useEffect(() => {
         setMounted(true);
@@ -36,6 +38,26 @@ export default function AttendanceListPage() {
     const startOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
     const endOfMonth = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
     const daysInMonth = eachDayOfInterval({ start: startOfMonth, end: endOfMonth });
+
+    const getStatusConfig = (status: AttendanceStatus | null) => {
+        if (!status) return { symbol: '・', color: 'text-slate-300' };
+        const config: Record<string, { symbol: string; color: string }> = {
+            present: { symbol: '○', color: 'text-green-600' },
+            absent: { symbol: '×', color: 'text-red-600' },
+            late: { symbol: '△', color: 'text-orange-500' },
+            early_leave: { symbol: '早', color: 'text-orange-500' },
+        };
+        return config[status] || { symbol: '?', color: 'text-gray-400' };
+    };
+
+    const getStatus = (studentId: string, d: string, p: number) => {
+        const record = attendanceRecords.find(
+            (r: AttendanceRecord) => r.studentId === studentId && r.date === d && r.period === p
+        );
+        return record ? record.status : null;
+    };
+
+    const filteredStudents = students.filter(s => (s.grade || 1) === selectedGrade);
 
     const handleMonthChange = (offset: number) => {
         const newDate = new Date(targetMonth);
@@ -61,6 +83,22 @@ export default function AttendanceListPage() {
                         </Button>
                     </Link>
                     <h1 className="text-xl font-bold">月間出席一覧</h1>
+                </div>
+
+                {/* Grade Switcher */}
+                <div className="bg-slate-100 p-1 rounded-lg flex items-center">
+                    <button
+                        className={cn("px-4 py-1 rounded text-sm font-bold transition-all", selectedGrade === 1 ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700")}
+                        onClick={() => setSelectedGrade(1)}
+                    >
+                        1年生
+                    </button>
+                    <button
+                        className={cn("px-4 py-1 rounded text-sm font-bold transition-all", selectedGrade === 2 ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700")}
+                        onClick={() => setSelectedGrade(2)}
+                    >
+                        2年生
+                    </button>
                 </div>
 
                 <div className="flex items-center bg-white rounded-lg border shadow-sm p-1">
@@ -134,7 +172,13 @@ export default function AttendanceListPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {students.map((student, idx) => (
+                                {filteredStudents.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={1 + daysInMonth.length * 5} className="p-8 text-center text-muted-foreground">
+                                            {selectedGrade}年生の学生は登録されていません。
+                                        </td>
+                                    </tr>
+                                ) : filteredStudents.map((student, idx) => (
                                     <tr key={student.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}>
                                         {/* Sticky Name Cell */}
                                         <td className="sticky left-0 z-10 bg-white border-b border-r border-slate-300 px-2 py-1 text-sm font-bold text-slate-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">

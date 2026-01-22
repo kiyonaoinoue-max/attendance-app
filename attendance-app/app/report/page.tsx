@@ -5,19 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, parseISO, isSameMonth, eachDayOfInterval, isSaturday, isSunday, getDay, startOfMonth, endOfMonth } from 'date-fns';
-import { ja } from 'date-fns/locale';
 import { utils, writeFile } from 'xlsx';
+import { cn } from '@/lib/utils';
 
 export default function ReportPage() {
     const { students, subjects, attendanceRecords, calendar, settings } = useStore();
     const [mounted, setMounted] = useState(false);
     const [targetMonth, setTargetMonth] = useState(format(new Date(), 'yyyy-MM'));
+    const [selectedGrade, setSelectedGrade] = useState<number>(1);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
     if (!mounted) return null;
+
+    // Filter students
+    const filteredStudents = students.filter(s => (s.grade || 1) === selectedGrade);
 
     // --- Logic ---
     // Find the earliest record date to prevent "Ghost Attendance" in past
@@ -33,6 +37,7 @@ export default function ReportPage() {
             const dStr = format(d, 'yyyy-MM-dd');
             const calConfig = calendar.find(c => c.date === dStr);
             if (calConfig?.isHoliday) return false;
+            // Default to Mon-Fri if no calendar
             if (calendar.length > 0) return true;
             return !isSaturday(d) && !isSunday(d);
         });
@@ -49,31 +54,20 @@ export default function ReportPage() {
         // Filter out "Pre-history" days (days before first app usage) from denominator
         validDays = validDays.filter(d => format(d, 'yyyy-MM-dd') >= minRecordDate);
 
-        // Attendance Rate (4 periods only)
-        const totalSlots = validDays.length * 4;
-        let attendanceRate = '0.0';
-        let presentCount = 0;
+        // Further filter: Only include days where this student has at least one attendance record
+        // This prevents counting days where no attendance was entered
+        const daysWithRecords = new Set(
+            attendanceRecords
+                .filter(r => r.studentId === studentId)
+                .map(r => r.date)
+        );
+        validDays = validDays.filter(d => daysWithRecords.has(format(d, 'yyyy-MM-dd')));
 
-        if (totalSlots > 0) {
-            // Absences in valid days/periods
-            const absences = attendanceRecords.filter(r => {
-                if (r.studentId !== studentId) return false;
-                if (r.status !== 'absent') return false;
-                if (r.period === 0) return false;
-                // Check date range
-                const d = parseISO(r.date);
-                if (d < start || d > end) return false;
+        // Get student grade for timetable lookup
+        const student = students.find(s => s.id === studentId);
+        const gradeKey: 'year1' | 'year2' = (student?.grade || 1) === 1 ? 'year1' : 'year2';
 
-                // Helper: check if holiday (already handled by getValidDays for logic, but record might exist on holiday?)
-                // We should filter absences that are on Valid Days
-                return validDays.some(vd => isSameMonth(vd, d) && vd.getDate() === d.getDate());
-            }).length;
-
-            presentCount = totalSlots - absences;
-            attendanceRate = ((presentCount / totalSlots) * 100).toFixed(1);
-        }
-
-        // Cumulative Hours
+        // Cumulative Hours and Attendance Tracking
         let subjectHours: Record<string, number> = {};
         let subjectHeldHours: Record<string, number> = {};
         subjects.forEach(s => {
@@ -81,39 +75,59 @@ export default function ReportPage() {
             subjectHeldHours[s.id] = 0;
         });
 
+        // Count total slots and present count based on TIMETABLE (not fixed 4)
+        let totalSlots = 0;
+        let presentCount = 0;
+
         validDays.forEach(d => {
             const dStr = format(d, 'yyyy-MM-dd');
             const dayIndex = getDay(d);
 
+            // Map dayIndex to simplified day string for key: "Sun", "Mon", etc.
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayStr = days[dayIndex];
+
             // Determine term based on date
-            // Simple logic: if date >= second term start, use second term timetable
-            const isSecondTerm = dStr >= settings.secondTerm.start;
-            const timetable = isSecondTerm ? settings.secondTermTimetable : settings.firstTermTimetable;
+            const secondTermStart = settings.secondTerm?.start || '';
+            const secondTermEnd = settings.secondTerm?.end || '';
+            const isSecondTerm = secondTermStart && secondTermEnd && dStr >= secondTermStart && dStr <= secondTermEnd;
+            const termKey: 'first' | 'second' = isSecondTerm ? 'second' : 'first';
+
+            // New Nested Structure
+            const timetable = settings.timetables?.[gradeKey]?.[termKey];
 
             [1, 2, 3, 4].forEach(period => {
-                const key = `${dayIndex}-${period}`;
+                const key = `${dayStr}-${period}`;
                 const subjectId = timetable?.[key];
+
+                // Only count this slot if timetable has a subject set
                 if (subjectId) {
+                    totalSlots++; // Count as scheduled slot
+
                     const record = attendanceRecords.find(r => r.studentId === studentId && r.date === dStr && r.period === period);
 
                     if (record) {
                         // Explicit record exists
+                        // Late (遅刻) and early_leave (早退) count as PRESENT
                         if (record.status !== 'absent') {
+                            presentCount++;
                             subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
                         }
+                        // Absent does not count as present, no hours added
                     } else {
-                        // No record (Implied Input)
-                        // ONLY count as present if date is ON or AFTER the first ever app usage
-                        // This prevents counting pre-history dates as present
-                        if (dStr >= minRecordDate) {
-                            subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
-                        }
+                        // No record for this specific period, but day has some records
+                        // Treat as present (implicit attendance for that period)
+                        presentCount++;
+                        subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
                     }
                 }
             });
         });
 
-        // Counts
+        // Calculate attendance rate
+        const attendanceRate = totalSlots > 0 ? ((presentCount / totalSlots) * 100).toFixed(1) : '0.0';
+
+        // Counts for late and early leave
         const late = attendanceRecords.filter(r => r.studentId === studentId && r.status === 'late' && parseISO(r.date) >= start && parseISO(r.date) <= end).length;
         const early = attendanceRecords.filter(r => r.studentId === studentId && r.status === 'early_leave' && parseISO(r.date) >= start && parseISO(r.date) <= end).length;
 
@@ -152,7 +166,13 @@ export default function ReportPage() {
                     </tr>
                 </thead>
                 <tbody>
-                    {students.map(student => {
+                    {filteredStudents.length === 0 ? (
+                        <tr>
+                            <td colSpan={5 + subjects.length} className="p-8 text-center text-muted-foreground">
+                                {selectedGrade}年生の学生は登録されていません。
+                            </td>
+                        </tr>
+                    ) : filteredStudents.map(student => {
                         const stat = calcStats(student.id, start, end);
                         return (
                             <tr key={student.id} className="border-t hover:bg-slate-50">
@@ -193,7 +213,8 @@ export default function ReportPage() {
             const data: (string | number)[][] = [
                 ['学籍番号', '氏名', 'クラス', `出席率(%)`, '遅刻', '早退', ...subjects.map(s => `${s.name} (出席/必須)`)]
             ];
-            students.forEach(s => {
+            // Export filtered students only? Or all? Usually export matches view.
+            filteredStudents.forEach(s => {
                 const stat = calcStats(s.id, start, end);
                 data.push([
                     s.studentNumber, s.name, s.className, `${stat.rate}%`, stat.late, stat.early,
@@ -223,7 +244,7 @@ export default function ReportPage() {
             createSheet('年間', parseISO(settings.firstTerm.start), parseISO(settings.secondTerm.end));
         }
 
-        writeFile(wb, `attendance_report_full_${format(new Date(), 'yyyyMMdd')}.xlsx`);
+        writeFile(wb, `attendance_report_${selectedGrade}yr_${format(new Date(), 'yyyyMMdd')}.xlsx`);
     };
 
     const [y, m] = targetMonth.split('-').map(Number);
@@ -256,7 +277,13 @@ export default function ReportPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {students.map(student => {
+                        {filteredStudents.length === 0 ? (
+                            <tr>
+                                <td colSpan={14} className="p-8 text-center text-muted-foreground">
+                                    {selectedGrade}年生の学生は登録されていません。
+                                </td>
+                            </tr>
+                        ) : filteredStudents.map(student => {
                             let totalPresent = 0;
                             let totalSlots = 0;
 
@@ -298,17 +325,35 @@ export default function ReportPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">集計・レポート</h1>
-                <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">
-                    Excel一括出力 (全シート)
-                </Button>
+                <div className="flex gap-4 items-center">
+                    {/* Grade Switcher */}
+                    <div className="bg-slate-100 p-1 rounded-lg flex items-center">
+                        <button
+                            className={cn("px-4 py-1 rounded text-sm font-bold transition-all", selectedGrade === 1 ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700")}
+                            onClick={() => setSelectedGrade(1)}
+                        >
+                            1年生
+                        </button>
+                        <button
+                            className={cn("px-4 py-1 rounded text-sm font-bold transition-all", selectedGrade === 2 ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700")}
+                            onClick={() => setSelectedGrade(2)}
+                        >
+                            2年生
+                        </button>
+                    </div>
+
+                    <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">
+                        Excel出力 ({selectedGrade}年)
+                    </Button>
+                </div>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>集計ビュー</CardTitle>
+                    <CardTitle>集計ビュー ({selectedGrade}年生)</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="month">
@@ -386,7 +431,7 @@ export default function ReportPage() {
                 <h3 className="font-bold mb-2">集計ロジック</h3>
                 <ul className="list-disc pl-5 space-y-1">
                     <li><strong>期間</strong>: 設定画面で指定した「前期」「後期」の期間に基づいて計算されます。</li>
-                    <li><strong>Excel出力</strong>: 「月別」「前期」「後期」「年間」の4つのシートを含むファイルを生成します。</li>
+                    <li><strong>Excel出力</strong>: 選択中の学年のみを含むファイルを生成します。</li>
                 </ul>
             </div>
         </div>

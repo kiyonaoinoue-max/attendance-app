@@ -5,14 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'; // Added imports
 import { CloudUpload, CloudDownload, Copy, CheckCircle2 } from 'lucide-react';
 import { CalendarDay } from '@/types';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
+const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']; // Define weekdays
+
+import { Crown, Key, ShieldCheck, ShieldAlert } from 'lucide-react'; // Added icons
+import { cn } from '@/lib/utils'; // Added cn
+
 export default function SettingsPage() {
-    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, exportData, importData, setSyncState, syncCode: globalSyncCode, syncExpiresAt, lastSyncTime, setLastSyncTime } = useStore();
+    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, exportData, importData, setSyncState, syncCode: globalSyncCode, syncExpiresAt, lastSyncTime, setLastSyncTime, subjects, getLicenseStatus, activateLicense, licenseExpiry } = useStore();
     const [mounted, setMounted] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
     const [syncCode, setSyncCode] = useState('');
@@ -20,6 +26,9 @@ export default function SettingsPage() {
     const [cloudExpiresAt, setCloudExpiresAt] = useState<number | null>(null);
     const [importCloudCode, setImportCloudCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    const [activationKey, setActivationKey] = useState('');
+    const licenseStatus = getLicenseStatus();
 
     useEffect(() => {
         setMounted(true);
@@ -72,6 +81,85 @@ export default function SettingsPage() {
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold">設定</h1>
+
+            {/* License Management Section */}
+            <Card className={cn(
+                "border-2 transition-all",
+                licenseStatus === 'pro' ? "border-green-400 bg-green-50 shadow-md" : "border-slate-300 bg-white"
+            )}>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                            {licenseStatus === 'pro' ? (
+                                <>
+                                    <Crown className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+                                    <span className="text-green-800">Pro ライセンス適用中</span>
+                                </>
+                            ) : (
+                                <>
+                                    <ShieldAlert className="h-6 w-6 text-slate-500" />
+                                    <span>ライセンス設定（Free版）</span>
+                                </>
+                            )}
+                        </CardTitle>
+                        {licenseStatus === 'pro' && (
+                            <div className="flex items-center gap-1 text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-bold">
+                                <ShieldCheck className="w-4 h-4" />
+                                <span>有効</span>
+                            </div>
+                        )}
+                    </div>
+                    <CardDescription>
+                        {licenseStatus === 'pro'
+                            ? `有効期限: ${licenseExpiry ? format(licenseExpiry, 'yyyy年MM月dd日') : '無期限'}`
+                            : '現在「無料版」を利用中です。学生数は5名まで登録可能です。'}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {licenseStatus !== 'pro' ? (
+                        <div className="space-y-4">
+                            <div className="bg-slate-100 p-4 rounded-lg">
+                                <p className="text-sm text-slate-600 mb-4">
+                                    制限を解除するには、購入時に発行されたライセンスキー（パスワード）を入力してください。
+                                </p>
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="password"
+                                        placeholder="ライセンスキーを入力"
+                                        value={activationKey}
+                                        onChange={(e) => setActivationKey(e.target.value)}
+                                        className="font-mono"
+                                    />
+                                    <Button
+                                        onClick={() => {
+                                            if (activateLicense(activationKey)) {
+                                                alert('Proライセンスが有効になりました！ありがとうございます。\n\n学生数の制限が解除されました。');
+                                                setActivationKey('');
+                                                window.location.reload();
+                                            } else {
+                                                alert('無効なライセンスキーです。もう一度確認してください。');
+                                            }
+                                        }}
+                                        className="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white min-w-[120px]"
+                                    >
+                                        <Key className="w-4 h-4 mr-2" />
+                                        解除
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="text-xs text-center text-slate-400">
+                                ※ ライセンスキーは1年間有効です
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <p className="text-sm text-green-700">
+                                全ての機能が無制限で利用可能です。
+                            </p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
             <Card>
                 <CardHeader>
@@ -330,6 +418,7 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
 
+
             <Card className="opacity-80">
                 <CardHeader>
                     <CardTitle className="text-base text-slate-600">オフライン・バックアップ（旧方式）</CardTitle>
@@ -375,6 +464,71 @@ export default function SettingsPage() {
                             }}
                         >
                             データをインポート（上書き）
+                        </Button>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Data Reset Section */}
+            <Card className="border-red-200 bg-red-50/30">
+                <CardHeader>
+                    <CardTitle className="text-red-700 flex items-center gap-2">
+                        ⚠️ データリセット（危険）
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <p className="text-sm text-red-600">
+                        以下の操作は取り消せません。実行前に必ずデータをバックアップしてください。<br />
+                        リセットするには、指定された文字を正確に入力する必要があります。
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Button
+                            variant="outline"
+                            className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                            onClick={() => {
+                                const input = prompt('設定（学期期間・時間割・カレンダー）をリセットします。\n\n学生・教科・出席データは保持されます。\n\n実行するには「設定リセット」と入力してください:');
+                                if (input === '設定リセット') {
+                                    useStore.getState().resetSettings();
+                                    alert('設定をリセットしました。ページを再読み込みします。');
+                                    window.location.reload();
+                                } else if (input !== null) {
+                                    alert('入力が正しくありません。リセットは実行されませんでした。');
+                                }
+                            }}
+                        >
+                            設定をリセット
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                            onClick={() => {
+                                const input = prompt('出席データをすべて削除します。\n\n学生・教科・設定は保持されます。\n\n実行するには「出席リセット」と入力してください:');
+                                if (input === '出席リセット') {
+                                    useStore.getState().resetAttendance();
+                                    alert('出席データを削除しました。ページを再読み込みします。');
+                                    window.location.reload();
+                                } else if (input !== null) {
+                                    alert('入力が正しくありません。リセットは実行されませんでした。');
+                                }
+                            }}
+                        >
+                            出席データをリセット
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="border-red-400 text-red-700 hover:bg-red-100"
+                            onClick={() => {
+                                const input = prompt('すべてのデータ（学生・教科・出席・設定）を削除します。\n\nこの操作はアプリを初期状態に戻します。\n\n実行するには「全削除」と入力してください:');
+                                if (input === '全削除') {
+                                    useStore.getState().resetAll();
+                                    alert('すべてのデータを削除しました。ページを再読み込みします。');
+                                    window.location.reload();
+                                } else if (input !== null) {
+                                    alert('入力が正しくありません。リセットは実行されませんでした。');
+                                }
+                            }}
+                        >
+                            🗑️ 全データをリセット
                         </Button>
                     </div>
                 </CardContent>

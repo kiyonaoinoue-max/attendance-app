@@ -1,40 +1,41 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Student, Subject, AttendanceRecord, AppSettings, CalendarDay, AttendanceStatus } from '@/types';
-import { startOfYear, endOfYear, eachDayOfInterval, isSaturday, isSunday, format } from 'date-fns';
-
-interface AppState {
-    students: Student[];
-    subjects: Subject[];
-    attendanceRecords: AttendanceRecord[];
-    calendar: CalendarDay[];
-    settings: AppSettings;
-
-    // Actions
-    addStudent: (student: Omit<Student, 'id'>) => void;
-    updateStudent: (id: string, data: Partial<Student>) => void;
-    deleteStudent: (id: string) => void;
-
-    addSubject: (subject: Omit<Subject, 'id'>) => void;
-    updateSubject: (id: string, data: Partial<Subject>) => void;
-    deleteSubject: (id: string) => void;
-
-    toggleAttendance: (studentId: string, date: string, period: number, status?: AttendanceStatus | null) => void;
-
-    updateSettings: (settings: Partial<AppSettings>) => void;
-    generateCalendar: (start: string, end: string) => void;
-    toggleHoliday: (date: string) => void;
-
-    exportData: () => string;
-    importData: (json: string) => boolean;
-    syncCode: string | null;
-    syncExpiresAt: number | null;
-    setSyncState: (code: string | null, expiresAt: number | null) => void;
-    lastSyncTime: number | null;
-    setLastSyncTime: (time: number) => void;
-}
+import { Student, Subject, AttendanceRecord, AppSettings, CalendarDay, AttendanceStatus, AppState } from '@/types';
+import { startOfYear, endOfYear, format, eachDayOfInterval, isSaturday, isSunday } from 'date-fns';
 
 const DEFAULT_STATUS_CYCLE: AttendanceStatus[] = ['present', 'absent', 'late', 'early_leave'];
+
+// Helper to migrate old settings to new structure if needed
+const migrateSettings = (savedSettings: any): AppSettings => {
+    // Check if new structure exists
+    if (savedSettings.timetables) {
+        return savedSettings as AppSettings;
+    }
+
+    // Migration from flat structure
+    return {
+        termStartDate: savedSettings.termStartDate || format(startOfYear(new Date()), 'yyyy-MM-dd'),
+        termEndDate: savedSettings.termEndDate || format(endOfYear(new Date()), 'yyyy-MM-dd'),
+        firstTerm: savedSettings.firstTerm || {
+            start: format(startOfYear(new Date()), 'yyyy-MM-dd'),
+            end: format(new Date(), 'yyyy-MM-dd')
+        },
+        secondTerm: savedSettings.secondTerm || {
+            start: format(new Date(), 'yyyy-MM-dd'),
+            end: format(endOfYear(new Date()), 'yyyy-MM-dd')
+        },
+        timetables: {
+            year1: {
+                first: savedSettings.firstTermTimetable || (savedSettings.timetables?.year1?.first || {}),
+                second: savedSettings.secondTermTimetable || (savedSettings.timetables?.year1?.second || {})
+            },
+            year2: {
+                first: (savedSettings.timetables?.year2?.first || {}),
+                second: (savedSettings.timetables?.year2?.second || {})
+            }
+        }
+    } as AppSettings;
+};
 
 export const useStore = create<AppState>()(
     persist(
@@ -54,23 +55,47 @@ export const useStore = create<AppState>()(
                     start: format(new Date(), 'yyyy-MM-dd'),
                     end: format(endOfYear(new Date()), 'yyyy-MM-dd')
                 },
-                firstTermTimetable: {},
-                secondTermTimetable: {},
-            },
+                timetables: {
+                    year1: { first: {}, second: {} },
+                    year2: { first: {}, second: {} }
+                }
+            } as AppSettings, // Type assertion for cleaner init
             syncCode: null,
             syncExpiresAt: null,
             lastSyncTime: null,
 
-            addStudent: (student) => set((state) => ({
-                students: [
-                    ...state.students,
-                    { ...student, id: crypto.randomUUID() },
-                ].sort((a, b) => a.studentNumber - b.studentNumber) // Keep sorted by Number
-            })),
+            addStudent: (student) => set((state) => {
+                // License Limit Check
+                const status = get().getLicenseStatus();
+                if (status !== 'pro' && state.students.length >= 5) {
+                    // Ideally throw error or return false, but simple guard here
+                    return state;
+                }
+
+                return {
+                    students: [
+                        ...state.students,
+                        { ...student, id: crypto.randomUUID(), grade: student.grade || 1 }, // Default to grade 1
+                    ].sort((a, b) => {
+                        // Sort by Grade, then Number
+                        if (a.grade !== b.grade) return (a.grade || 1) - (b.grade || 1);
+                        return a.studentNumber - b.studentNumber;
+                    })
+                };
+            }),
 
             updateStudent: (id, data) => set((state) => ({
                 students: state.students.map((s) => (s.id === id ? { ...s, ...data } : s))
-                    .sort((a, b) => (data.studentNumber ? a.studentNumber - b.studentNumber : 0) || a.studentNumber - b.studentNumber)
+                    .sort((a, b) => {
+                        // Re-sort
+                        const gradeA = (a.id === id && data.grade) ? data.grade : (a.grade || 1);
+                        const gradeB = (b.id === id && data.grade) ? data.grade : (b.grade || 1);
+                        const numA = (a.id === id && data.studentNumber) ? data.studentNumber : a.studentNumber;
+                        const numB = (b.id === id && data.studentNumber) ? data.studentNumber : b.studentNumber;
+
+                        if (gradeA !== gradeB) return gradeA - gradeB;
+                        return numA - numB;
+                    })
             })),
 
             deleteStudent: (id) => set((state) => ({
@@ -186,10 +211,110 @@ export const useStore = create<AppState>()(
             },
             setSyncState: (code, expiresAt) => set({ syncCode: code, syncExpiresAt: expiresAt }),
             setLastSyncTime: (time) => set({ lastSyncTime: time }),
+
+            // Reset functions
+            resetSettings: () => set({
+                settings: {
+                    termStartDate: format(startOfYear(new Date()), 'yyyy-MM-dd'),
+                    termEndDate: format(endOfYear(new Date()), 'yyyy-MM-dd'),
+                    firstTerm: {
+                        start: format(startOfYear(new Date()), 'yyyy-MM-dd'),
+                        end: format(new Date(), 'yyyy-MM-dd')
+                    },
+                    secondTerm: {
+                        start: format(new Date(), 'yyyy-MM-dd'),
+                        end: format(endOfYear(new Date()), 'yyyy-MM-dd')
+                    },
+                    timetables: {
+                        year1: { first: {}, second: {} },
+                        year2: { first: {}, second: {} }
+                    }
+                },
+                calendar: []
+            }),
+
+            resetAttendance: () => set({ attendanceRecords: [] }),
+
+            // License
+            licenseKey: null,
+            licenseExpiry: null,
+
+            activateLicense: (key) => {
+                // Hardcoded validation for MVP
+                // In production, this should check against an API or hash
+                const VALID_KEY = "ANTIG2026PRO";
+
+                if (key === VALID_KEY) {
+                    const oneYearFromNow = new Date();
+                    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+                    set({
+                        licenseKey: key,
+                        licenseExpiry: oneYearFromNow.getTime()
+                    });
+                    return true;
+                }
+                return false;
+            },
+
+            getLicenseStatus: () => {
+                const state = get();
+                if (!state.licenseKey || !state.licenseExpiry) return 'free';
+
+                if (Date.now() > state.licenseExpiry) return 'expired';
+
+                return 'pro';
+            },
+
+            resetAll: () => set({
+                students: [],
+                subjects: [],
+                attendanceRecords: [],
+                calendar: [],
+                settings: {
+                    termStartDate: format(startOfYear(new Date()), 'yyyy-MM-dd'),
+                    termEndDate: format(endOfYear(new Date()), 'yyyy-MM-dd'),
+                    firstTerm: {
+                        start: format(startOfYear(new Date()), 'yyyy-MM-dd'),
+                        end: format(new Date(), 'yyyy-MM-dd')
+                    },
+                    secondTerm: {
+                        start: format(new Date(), 'yyyy-MM-dd'),
+                        end: format(endOfYear(new Date()), 'yyyy-MM-dd')
+                    },
+                    timetables: {
+                        year1: { first: {}, second: {} },
+                        year2: { first: {}, second: {} }
+                    }
+                },
+                syncCode: null,
+                syncExpiresAt: null,
+                lastSyncTime: null,
+                licenseKey: null,
+                licenseExpiry: null
+            }),
         }),
         {
             name: 'attendance-storage',
             storage: createJSONStorage(() => localStorage),
+            version: 1,
+            migrate: (persistedState: any, version: number) => {
+                if (version === 0) {
+                    // Migration from v0 (no version) to v1
+                    const oldSettings = persistedState.settings || {};
+                    const newSettings = migrateSettings(oldSettings);
+                    return {
+                        ...persistedState,
+                        settings: newSettings,
+                        // Ensure all students have a grade
+                        students: (persistedState.students || []).map((s: any) => ({
+                            ...s,
+                            grade: s.grade || 1
+                        }))
+                    };
+                }
+                return persistedState;
+            },
         }
     )
 );

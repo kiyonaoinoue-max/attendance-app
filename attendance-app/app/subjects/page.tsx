@@ -6,14 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-const DAYS = ['月', '火', '水', '木', '金'];
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']; // Key format matching attendance/report pages
+const DAY_LABELS = ['月', '火', '水', '木', '金']; // Display labels
 const PERIODS = [1, 2, 3, 4];
 
 export default function SubjectsPage() {
     const { subjects, addSubject, deleteSubject, settings, updateSettings } = useStore();
     const [formData, setFormData] = useState({ name: '', teacher: '', requiredHours: '' });
     const [mounted, setMounted] = useState(false);
+    const [selectedGrade, setSelectedGrade] = useState<number>(1);
 
     useEffect(() => {
         setMounted(true);
@@ -31,6 +34,28 @@ export default function SubjectsPage() {
             requiredHours: parseInt(formData.requiredHours)
         });
         setFormData({ name: '', teacher: '', requiredHours: '' });
+    };
+
+    const gradeKey: 'year1' | 'year2' = selectedGrade === 1 ? 'year1' : 'year2';
+
+    const updateTimetable = (term: 'first' | 'second', key: string, value: string) => {
+        // Deep copy struct to avoid mutation, with safe defaults
+        const currentTimetables = settings.timetables || { year1: { first: {}, second: {} }, year2: { first: {}, second: {} } };
+        const newTimetables = {
+            year1: {
+                first: { ...(currentTimetables.year1?.first || {}) },
+                second: { ...(currentTimetables.year1?.second || {}) }
+            },
+            year2: {
+                first: { ...(currentTimetables.year2?.first || {}) },
+                second: { ...(currentTimetables.year2?.second || {}) }
+            }
+        };
+
+        // Update specific entry
+        newTimetables[gradeKey][term][key] = value;
+
+        updateSettings({ timetables: newTimetables });
     };
 
     return (
@@ -123,7 +148,23 @@ export default function SubjectsPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>時間割設定</CardTitle>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>時間割設定</CardTitle>
+                        <div className="bg-slate-100 p-1 rounded-lg flex items-center">
+                            <button
+                                className={cn("px-4 py-1 rounded text-sm font-bold transition-all", selectedGrade === 1 ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700")}
+                                onClick={() => setSelectedGrade(1)}
+                            >
+                                1年生
+                            </button>
+                            <button
+                                className={cn("px-4 py-1 rounded text-sm font-bold transition-all", selectedGrade === 2 ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700")}
+                                onClick={() => setSelectedGrade(2)}
+                            >
+                                2年生
+                            </button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Tabs defaultValue="first" className="w-full">
@@ -138,8 +179,8 @@ export default function SubjectsPage() {
                                     <thead>
                                         <tr>
                                             <th className="border p-2 bg-slate-100">時限 \ 曜日</th>
-                                            {DAYS.map((d) => (
-                                                <th key={d} className="border p-2 bg-slate-100 w-1/5">{d}</th>
+                                            {DAY_LABELS.map((d, i) => (
+                                                <th key={DAYS[i]} className="border p-2 bg-slate-100 w-1/5">{d}</th>
                                             ))}
                                         </tr>
                                     </thead>
@@ -147,24 +188,16 @@ export default function SubjectsPage() {
                                         {PERIODS.map(p => (
                                             <tr key={p}>
                                                 <td className="border p-2 font-bold text-center bg-slate-50">{p}限</td>
-                                                {DAYS.map((d, i) => {
-                                                    const dayIndex = i + 1; // 1=Mon, ..., 5=Fri
-                                                    const key = `${dayIndex}-${p}`;
-                                                    const currentSubjectId = settings.firstTermTimetable?.[key] || '';
+                                                {DAYS.map((dayKey, i) => {
+                                                    const key = `${dayKey}-${p}`;
+                                                    const currentSubjectId = settings.timetables?.[gradeKey]?.['first']?.[key] || '';
 
                                                     return (
                                                         <td key={key} className="border p-2">
                                                             <select
                                                                 className="w-full p-2 border rounded text-xs"
                                                                 value={currentSubjectId}
-                                                                onChange={(e) => {
-                                                                    updateSettings({
-                                                                        firstTermTimetable: {
-                                                                            ...settings.firstTermTimetable,
-                                                                            [key]: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
+                                                                onChange={(e) => updateTimetable('first', key, e.target.value)}
                                                             >
                                                                 <option value="">(未設定)</option>
                                                                 {subjects.map(s => (
@@ -187,8 +220,8 @@ export default function SubjectsPage() {
                                     <thead>
                                         <tr>
                                             <th className="border p-2 bg-slate-100">時限 \ 曜日</th>
-                                            {DAYS.map((d) => (
-                                                <th key={d} className="border p-2 bg-slate-100 w-1/5">{d}</th>
+                                            {DAY_LABELS.map((d, i) => (
+                                                <th key={DAYS[i]} className="border p-2 bg-slate-100 w-1/5">{d}</th>
                                             ))}
                                         </tr>
                                     </thead>
@@ -196,24 +229,16 @@ export default function SubjectsPage() {
                                         {PERIODS.map(p => (
                                             <tr key={p}>
                                                 <td className="border p-2 font-bold text-center bg-slate-50">{p}限</td>
-                                                {DAYS.map((d, i) => {
-                                                    const dayIndex = i + 1; // 1=Mon, ..., 5=Fri
-                                                    const key = `${dayIndex}-${p}`;
-                                                    const currentSubjectId = settings.secondTermTimetable?.[key] || '';
+                                                {DAYS.map((dayKey, i) => {
+                                                    const key = `${dayKey}-${p}`;
+                                                    const currentSubjectId = settings.timetables?.[gradeKey]?.['second']?.[key] || '';
 
                                                     return (
                                                         <td key={key} className="border p-2">
                                                             <select
                                                                 className="w-full p-2 border rounded text-xs"
                                                                 value={currentSubjectId}
-                                                                onChange={(e) => {
-                                                                    updateSettings({
-                                                                        secondTermTimetable: {
-                                                                            ...settings.secondTermTimetable,
-                                                                            [key]: e.target.value
-                                                                        }
-                                                                    });
-                                                                }}
+                                                                onChange={(e) => updateTimetable('second', key, e.target.value)}
                                                             >
                                                                 <option value="">(未設定)</option>
                                                                 {subjects.map(s => (
