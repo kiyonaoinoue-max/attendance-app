@@ -200,97 +200,94 @@ export default function LandingPage() {
                 </div>
             </section>
 
-        </div>
-            </section >
+            {/* Usage Guide Section */}
+            <section className="py-24 bg-slate-50 relative">
+                <div className="container mx-auto px-4 max-w-5xl">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">使い方はとてもシンプル</h2>
+                        <p className="text-lg text-slate-600">
+                            難しいマニュアルは必要ありません。3ステップですぐに始められます。
+                        </p>
+                    </div>
 
-        {/* Usage Guide Section */ }
-        < section className = "py-24 bg-slate-50 relative" >
-            <div className="container mx-auto px-4 max-w-5xl">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">使い方はとてもシンプル</h2>
-                    <p className="text-lg text-slate-600">
-                        難しいマニュアルは必要ありません。3ステップですぐに始められます。
-                    </p>
-                </div>
+                    {/* Basic Usage Steps */}
+                    <div className="grid md:grid-cols-3 gap-8 mb-20 relative">
+                        {/* Connecting Line (Desktop) */}
+                        <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-1 bg-indigo-100 z-0"></div>
 
-                {/* Basic Usage Steps */}
-                <div className="grid md:grid-cols-3 gap-8 mb-20 relative">
-                    {/* Connecting Line (Desktop) */}
-                    <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-1 bg-indigo-100 z-0"></div>
+                        {[
+                            {
+                                step: "Step 1",
+                                title: "学生を登録",
+                                desc: "Excelの名簿リストをコピーして貼り付けるだけ。50人の登録も一瞬で完了します。",
+                                icon: <Users className="w-8 h-8 text-indigo-600" />
+                            },
+                            {
+                                step: "Step 2",
+                                title: "毎日の出席入力",
+                                desc: "教室ではタブレットでタップするだけ。直感的な操作で、迷うことはありません。",
+                                icon: <Check className="w-8 h-8 text-indigo-600" />
+                            },
+                            {
+                                step: "Step 3",
+                                title: "レポート確認",
+                                desc: "入力したデータは自動集計。出席率や公欠数がいつでも確認できます。",
+                                icon: <PieChart className="w-8 h-8 text-indigo-600" />
+                            }
+                        ].map((item, i) => (
+                            <div key={i} className="relative z-10 bg-white p-8 rounded-2xl shadow-lg border border-slate-100 text-center hover:-translate-y-1 transition-transform">
+                                <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    {item.icon}
+                                </div>
+                                <div className="text-indigo-600 font-bold mb-2">{item.step}</div>
+                                <h3 className="text-xl font-bold text-slate-900 mb-4">{item.title}</h3>
+                                <p className="text-slate-600 leading-relaxed">
+                                    {item.desc}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
 
-                    {[
-                        {
-                            step: "Step 1",
-                            title: "学生を登録",
-                            desc: "Excelの名簿リストをコピーして貼り付けるだけ。50人の登録も一瞬で完了します。",
-                            icon: <Users className="w-8 h-8 text-indigo-600" />
-                        },
-                        {
-                            step: "Step 2",
-                            title: "毎日の出席入力",
-                            desc: "教室ではタブレットでタップするだけ。直感的な操作で、迷うことはありません。",
-                            icon: <Check className="w-8 h-8 text-indigo-600" />
-                        },
-                        {
-                            step: "Step 3",
-                            title: "レポート確認",
-                            desc: "入力したデータは自動集計。出席率や公欠数がいつでも確認できます。",
-                            icon: <PieChart className="w-8 h-8 text-indigo-600" />
-                        }
-                    ].map((item, i) => (
-                        <div key={i} className="relative z-10 bg-white p-8 rounded-2xl shadow-lg border border-slate-100 text-center hover:-translate-y-1 transition-transform">
-                            <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                {item.icon}
+                    {/* Advanced Usage (Pro Tip) */}
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 md:p-12 text-white shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
+                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                            <div className="flex-1 text-center md:text-left">
+                                <div className="inline-block bg-white/20 px-4 py-1 rounded-full text-sm font-bold mb-4 backdrop-blur-sm">
+                                    ✨ もっと便利な使い方
+                                </div>
+                                <h3 className="text-2xl md:text-3xl font-bold mb-4">
+                                    「あとから設定」でもっと便利に
+                                </h3>
+                                <p className="text-lg text-indigo-100 leading-relaxed mb-6">
+                                    まずは出席入力だけ始めてください。<br />
+                                    時間がある時に「教科」や「学期」を設定すれば、<br />
+                                    <span className="font-bold text-white border-b-2 border-yellow-400">過去のデータも全て自動で再計算</span>され、
+                                    詳細なレポートが完成します。
+                                </p>
+                                <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                                    <div className="bg-white/10 px-3 py-1 rounded text-sm">✅ 忙しい4月でも安心</div>
+                                    <div className="bg-white/10 px-3 py-1 rounded text-sm">✅ 設定変更も即座に反映</div>
+                                </div>
                             </div>
-                            <div className="text-indigo-600 font-bold mb-2">{item.step}</div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-4">{item.title}</h3>
-                            <p className="text-slate-600 leading-relaxed">
-                                {item.desc}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Advanced Usage (Pro Tip) */}
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 md:p-12 text-white shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
-                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-                        <div className="flex-1 text-center md:text-left">
-                            <div className="inline-block bg-white/20 px-4 py-1 rounded-full text-sm font-bold mb-4 backdrop-blur-sm">
-                                ✨ もっと便利な使い方
+                            <div className="w-full md:w-1/3 bg-white/10 p-6 rounded-xl backdrop-blur-sm border border-white/20">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Settings className="w-6 h-6 text-yellow-300" />
+                                    <div className="font-bold">設定はいつでもOK</div>
+                                </div>
+                                <p className="text-sm text-indigo-100">
+                                    「とりあえず使い始める」<br />
+                                    それがDaily Attendance Proの<br />
+                                    一番おすすめな使い方です。
+                                </p>
                             </div>
-                            <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                                「あとから設定」でもっと便利に
-                            </h3>
-                            <p className="text-lg text-indigo-100 leading-relaxed mb-6">
-                                まずは出席入力だけ始めてください。<br />
-                                時間がある時に「教科」や「学期」を設定すれば、<br />
-                                <span className="font-bold text-white border-b-2 border-yellow-400">過去のデータも全て自動で再計算</span>され、
-                                詳細なレポートが完成します。
-                            </p>
-                            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                                <div className="bg-white/10 px-3 py-1 rounded text-sm">✅ 忙しい4月でも安心</div>
-                                <div className="bg-white/10 px-3 py-1 rounded text-sm">✅ 設定変更も即座に反映</div>
-                            </div>
-                        </div>
-                        <div className="w-full md:w-1/3 bg-white/10 p-6 rounded-xl backdrop-blur-sm border border-white/20">
-                            <div className="flex items-center gap-3 mb-4">
-                                <Settings className="w-6 h-6 text-yellow-300" />
-                                <div className="font-bold">設定はいつでもOK</div>
-                            </div>
-                            <p className="text-sm text-indigo-100">
-                                「とりあえず使い始める」<br />
-                                それがDaily Attendance Proの<br />
-                                一番おすすめな使い方です。
-                            </p>
                         </div>
                     </div>
                 </div>
-            </div>
             </section >
 
-        {/* Pricing Section */ }
-        < section id = "pricing" className = "py-24 bg-white relative overflow-hidden" >
+            {/* Pricing Section */}
+            < section id="pricing" className="py-24 bg-white relative overflow-hidden" >
                 <div className="absolute inset-0 bg-grid-slate-200/50 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-16">
@@ -387,159 +384,159 @@ export default function LandingPage() {
                 </div>
             </section >
 
-        {/* FAQ Section */ }
-        < section id = "faq" className = "py-24 bg-white" >
-            <div className="container mx-auto px-4 max-w-3xl">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">よくある質問</h2>
-                    <p className="text-lg text-slate-600">
-                        導入にあたって、気になる点にお答えします。
-                    </p>
-                </div>
+            {/* FAQ Section */}
+            < section id="faq" className="py-24 bg-white" >
+                <div className="container mx-auto px-4 max-w-3xl">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">よくある質問</h2>
+                        <p className="text-lg text-slate-600">
+                            導入にあたって、気になる点にお答えします。
+                        </p>
+                    </div>
 
-                <Accordion type="single" collapsible className="w-full">
-                    {[
-                        {
-                            question: "本当に個人で使って大丈夫ですか？",
-                            answer: (
-                                <>
-                                    はい、担任の先生が個人で使うことを想定して作っています。<br /><br />
-                                    本アプリは<br />
-                                    • 担任が自分のPCやタブレットで<br />
-                                    • 日々の出席管理を楽にする<br /><br />
-                                    ことを目的とした個人利用向けツールです。<br />
-                                    学校全体のシステム連携などは行いません。
-                                </>
-                            )
-                        },
-                        {
-                            question: "学校のPCと自分のタブレット、両方で使えますか？",
-                            answer: (
-                                <>
-                                    使えます。<br /><br />
-                                    教室ではタブレット端末、<br />
-                                    職員室では学校PCで利用できます。<br /><br />
-                                    簡単クラウド同期で<br />
-                                    「合言葉を発行」ボタンを押すと表示される<br />
-                                    6桁の数字を入力するだけで、<br />
-                                    同じ出席データを引き継げます。
-                                </>
-                            )
-                        },
-                        {
-                            question: "データはクラウドに保存されますか？",
-                            answer: (
-                                <>
-                                    常時保存はされません。<br />
-                                    • 通常の作業データは端末内に保存されます<br />
-                                    • 同期操作を行ったときのみ、一時的にサーバーへ保存されます<br />
-                                    • 同期用データは一定時間後に自動削除されます<br /><br />
-                                    個人情報を常にインターネット上に置かない設計です。
-                                </>
-                            )
-                        },
-                        {
-                            question: "インターネットが無い教室でも使えますか？",
-                            answer: (
-                                <>
-                                    はい、使えます。<br /><br />
-                                    出席入力や確認は<br />
-                                    オフライン環境でも利用可能です。<br /><br />
-                                    ※ 他の端末へデータを移す場合のみ、<br />
-                                    インターネット接続が必要です。
-                                </>
-                            )
-                        },
-                        {
-                            question: "バックアップは取れますか？",
-                            answer: (
-                                <>
-                                    はい、取れます。<br /><br />
-                                    現在の出席データを<br />
-                                    パスワード付きファイルとして保存できます。<br />
-                                    • USBメモリへの保存<br />
-                                    • 別のPCへの移行<br /><br />
-                                    などが可能です。
-                                </>
-                            )
-                        },
-                        {
-                            question: "パスワードを忘れたらどうなりますか？",
-                            answer: (
-                                <>
-                                    バックアップファイルは復元できません。<br /><br />
-                                    安全性を重視しているため、<br />
-                                    パスワードを忘れた場合の復元手段はありません。<br /><br />
-                                    大切なデータの場合は<br />
-                                    パスワードを控える／定期的に再バックアップをおすすめします。
-                                </>
-                            )
-                        },
-                        {
-                            question: "サポートはありますか？",
-                            answer: (
-                                <>
-                                    マニュアル・FAQでのサポートが中心です。<br /><br />
-                                    個人向けツールのため、<br />
-                                    電話サポートや個別対応は行っていません。<br /><br />
-                                    その分、<br />
-                                    価格を抑えて提供しています。
-                                </>
-                            )
-                        },
-                        {
-                            question: "学校全体で使いたい場合は？",
-                            answer: (
-                                <>
-                                    学校・学科単位での利用や<br />
-                                    カスタマイズをご希望の場合は、<br />
-                                    別途ご相談ください。<br /><br />
-                                    （個人向け価格とは異なります）
-                                </>
-                            )
-                        },
-                        {
-                            question: "データが消えることはありませんか？",
-                            answer: (
-                                <>
-                                    通常の利用で、<br />
-                                    突然データが消えることはありません。<br /><br />
-                                    ただし、<br />
-                                    • PCの故障<br />
-                                    • ブラウザデータの削除<br /><br />
-                                    に備えて、<br />
-                                    定期的なバックアップをおすすめしています。
-                                </>
-                            )
-                        },
-                        {
-                            question: "どんな先生に向いていますか？",
-                            answer: (
-                                <>
-                                    • 担任を持っている先生<br />
-                                    • 出席管理を紙から切り替えたい方<br />
-                                    • 教室ではタブレットを使いたい方<br />
-                                    • 面倒なシステムは使いたくない方<br /><br />
-                                    に向いています。
-                                </>
-                            )
-                        }
-                    ].map((faq, i) => (
-                        <AccordionItem key={i} value={`item-${i}`}>
-                            <AccordionTrigger className="text-left text-lg font-medium text-slate-900">
-                                Q{i + 1}. {faq.question}
-                            </AccordionTrigger>
-                            <AccordionContent className="text-slate-600 leading-relaxed text-base pt-2 pr-4">
-                                {faq.answer}
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
-            </div>
+                    <Accordion type="single" collapsible className="w-full">
+                        {[
+                            {
+                                question: "本当に個人で使って大丈夫ですか？",
+                                answer: (
+                                    <>
+                                        はい、担任の先生が個人で使うことを想定して作っています。<br /><br />
+                                        本アプリは<br />
+                                        • 担任が自分のPCやタブレットで<br />
+                                        • 日々の出席管理を楽にする<br /><br />
+                                        ことを目的とした個人利用向けツールです。<br />
+                                        学校全体のシステム連携などは行いません。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "学校のPCと自分のタブレット、両方で使えますか？",
+                                answer: (
+                                    <>
+                                        使えます。<br /><br />
+                                        教室ではタブレット端末、<br />
+                                        職員室では学校PCで利用できます。<br /><br />
+                                        簡単クラウド同期で<br />
+                                        「合言葉を発行」ボタンを押すと表示される<br />
+                                        6桁の数字を入力するだけで、<br />
+                                        同じ出席データを引き継げます。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "データはクラウドに保存されますか？",
+                                answer: (
+                                    <>
+                                        常時保存はされません。<br />
+                                        • 通常の作業データは端末内に保存されます<br />
+                                        • 同期操作を行ったときのみ、一時的にサーバーへ保存されます<br />
+                                        • 同期用データは一定時間後に自動削除されます<br /><br />
+                                        個人情報を常にインターネット上に置かない設計です。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "インターネットが無い教室でも使えますか？",
+                                answer: (
+                                    <>
+                                        はい、使えます。<br /><br />
+                                        出席入力や確認は<br />
+                                        オフライン環境でも利用可能です。<br /><br />
+                                        ※ 他の端末へデータを移す場合のみ、<br />
+                                        インターネット接続が必要です。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "バックアップは取れますか？",
+                                answer: (
+                                    <>
+                                        はい、取れます。<br /><br />
+                                        現在の出席データを<br />
+                                        パスワード付きファイルとして保存できます。<br />
+                                        • USBメモリへの保存<br />
+                                        • 別のPCへの移行<br /><br />
+                                        などが可能です。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "パスワードを忘れたらどうなりますか？",
+                                answer: (
+                                    <>
+                                        バックアップファイルは復元できません。<br /><br />
+                                        安全性を重視しているため、<br />
+                                        パスワードを忘れた場合の復元手段はありません。<br /><br />
+                                        大切なデータの場合は<br />
+                                        パスワードを控える／定期的に再バックアップをおすすめします。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "サポートはありますか？",
+                                answer: (
+                                    <>
+                                        マニュアル・FAQでのサポートが中心です。<br /><br />
+                                        個人向けツールのため、<br />
+                                        電話サポートや個別対応は行っていません。<br /><br />
+                                        その分、<br />
+                                        価格を抑えて提供しています。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "学校全体で使いたい場合は？",
+                                answer: (
+                                    <>
+                                        学校・学科単位での利用や<br />
+                                        カスタマイズをご希望の場合は、<br />
+                                        別途ご相談ください。<br /><br />
+                                        （個人向け価格とは異なります）
+                                    </>
+                                )
+                            },
+                            {
+                                question: "データが消えることはありませんか？",
+                                answer: (
+                                    <>
+                                        通常の利用で、<br />
+                                        突然データが消えることはありません。<br /><br />
+                                        ただし、<br />
+                                        • PCの故障<br />
+                                        • ブラウザデータの削除<br /><br />
+                                        に備えて、<br />
+                                        定期的なバックアップをおすすめしています。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "どんな先生に向いていますか？",
+                                answer: (
+                                    <>
+                                        • 担任を持っている先生<br />
+                                        • 出席管理を紙から切り替えたい方<br />
+                                        • 教室ではタブレットを使いたい方<br />
+                                        • 面倒なシステムは使いたくない方<br /><br />
+                                        に向いています。
+                                    </>
+                                )
+                            }
+                        ].map((faq, i) => (
+                            <AccordionItem key={i} value={`item-${i}`}>
+                                <AccordionTrigger className="text-left text-lg font-medium text-slate-900">
+                                    Q{i + 1}. {faq.question}
+                                </AccordionTrigger>
+                                <AccordionContent className="text-slate-600 leading-relaxed text-base pt-2 pr-4">
+                                    {faq.answer}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </div>
             </section >
 
-        {/* CTA Section */ }
-        < section className = "py-24 bg-slate-900 text-white relative overflow-hidden" >
+            {/* CTA Section */}
+            < section className="py-24 bg-slate-900 text-white relative overflow-hidden" >
                 <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 <div className="container mx-auto px-4 text-center relative z-10">
                     <h2 className="text-3xl md:text-5xl font-bold mb-8">
