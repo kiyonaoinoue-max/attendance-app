@@ -72,7 +72,7 @@ export default function LandingPage() {
                         </span>
                     </h1>
                     <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        <span className="block font-bold text-slate-800 mb-2">「50名の出席確認が、最短30秒でも完了」</span>
+                        <span className="block font-bold text-slate-800 mb-2">「50人の出席が、最短30秒で完了」</span>
                         複雑な操作は一切不要。毎日のルーチンワークを劇的に効率化します。<br className="hidden md:block" />
                         タブレット一台で、クラス全員の状況を一目で把握。
                     </p>
@@ -158,7 +158,7 @@ export default function LandingPage() {
                             {
                                 icon: <Cloud className="h-6 w-6" />,
                                 title: "かんたんクラウド同期",
-                                description: "「合言葉」を入れるだけで、iPadとiPhone、PC間でのデータ移行が一瞬で完了。",
+                                description: "「合言葉」で一時的にデータを中継するだけ。クラウドにデータを保存し続けないので、個人情報も安心です。",
                                 color: "bg-indigo-100 text-indigo-600"
                             },
                             {
