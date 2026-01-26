@@ -156,6 +156,7 @@ export default function LandingPage() {
                                 description: (
                                     <>
                                         「1.8時間×4限＝7.2時間」など、専門学校特有の集計も完全自動化。<br />
+                                        教科設定をすれば、現在の出席と必須時間の進捗も一目でわかります。<br />
                                         <span className="text-xs text-slate-500 mt-2 block">※6限・8限対応版も開発中</span>
                                     </>
                                 ),
