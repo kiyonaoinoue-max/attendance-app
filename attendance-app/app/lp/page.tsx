@@ -66,13 +66,19 @@ export default function LandingPage() {
                         先生のための新しい出席管理ツール
                     </div>
                     <h1 className="text-4xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight tracking-tight">
-                        出席管理を、<br />
+                        出席管理を、
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
                             もっとシンプルに。
                         </span>
                     </h1>
                     <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        <span className="block font-bold text-slate-800 mb-2">「50人の出席が、最短30秒で完了」</span>
+                        <span className="block font-bold text-slate-800 mb-2 text-xl md:text-2xl">
+                            「
+                            <span className="text-indigo-600 text-3xl md:text-4xl">50人</span>
+                            の出席が、最短
+                            <span className="text-indigo-600 text-3xl md:text-4xl">30秒</span>
+                            で完了」
+                        </span>
                         複雑な操作は一切不要。毎日のルーチンワークを劇的に効率化します。<br className="hidden md:block" />
                         タブレット一台で、クラス全員の状況を一目で把握。
                     </p>
