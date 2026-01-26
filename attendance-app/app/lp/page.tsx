@@ -17,7 +17,6 @@ export default function LandingPage() {
     // スクロールに応じてスケールを変化させる (1.1 -> 1.0)
     // 画像が見え始めたらズームアウトし始める
     const scale = useTransform(scrollYProgress, [0, 0.5], [1.1, 1]);
-    const opacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
 
     const [activeTab, setActiveTab] = useState("dashboard");
 
@@ -110,7 +109,7 @@ export default function LandingPage() {
                     {/* App Preview Mockup Image */}
                     <div className="mt-8 relative max-w-5xl mx-auto" ref={targetRef}>
                         <motion.div
-                            style={{ scale, opacity }}
+                            style={{ scale }}
                             className="relative rounded-2xl bg-slate-900 p-2 shadow-2xl ring-1 ring-slate-900/10"
                         >
                             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-20"></div>
