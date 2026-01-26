@@ -72,11 +72,11 @@ export default function LandingPage() {
                         </span>
                     </h1>
                     <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        <span className="block font-bold text-slate-800 mb-2 text-xl md:text-2xl">
+                        <span className="block font-bold text-slate-800 mb-4 text-2xl md:text-3xl leading-snug">
                             「
-                            <span className="text-indigo-600 text-3xl md:text-4xl">50人</span>
+                            <span className="text-indigo-600 text-3xl md:text-4xl font-extrabold">50人</span>
                             の出席が、最短
-                            <span className="text-indigo-600 text-3xl md:text-4xl">30秒</span>
+                            <span className="text-indigo-600 text-3xl md:text-4xl font-extrabold">30秒</span>
                             で完了」
                         </span>
                         複雑な操作は一切不要。毎日のルーチンワークを劇的に効率化します。<br className="hidden md:block" />
