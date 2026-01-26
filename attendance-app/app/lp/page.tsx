@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Check, Download, Zap, Users, GraduationCap, Cloud, FileSpreadsheet, Lock, ExternalLink, ArrowRight, Menu, LayoutDashboard, CalendarCheck, Settings, PieChart } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useRef, useState } from 'react';
@@ -294,6 +295,156 @@ export default function LandingPage() {
                             </CardFooter>
                         </Card>
                     </div>
+                </div>
+            </section>
+
+            {/* FAQ Section */}
+            <section id="faq" className="py-24 bg-white">
+                <div className="container mx-auto px-4 max-w-3xl">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">よくある質問</h2>
+                        <p className="text-lg text-slate-600">
+                            導入にあたって、気になる点にお答えします。
+                        </p>
+                    </div>
+
+                    <Accordion type="single" collapsible className="w-full">
+                        {[
+                            {
+                                question: "本当に個人で使って大丈夫ですか？",
+                                answer: (
+                                    <>
+                                        はい、担任の先生が個人で使うことを想定して作っています。<br /><br />
+                                        本アプリは<br />
+                                        • 担任が自分のPCやタブレットで<br />
+                                        • 日々の出席管理を楽にする<br /><br />
+                                        ことを目的とした個人利用向けツールです。<br />
+                                        学校全体のシステム連携などは行いません。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "学校のPCと自分のタブレット、両方で使えますか？",
+                                answer: (
+                                    <>
+                                        使えます。<br /><br />
+                                        教室ではタブレット端末、<br />
+                                        職員室では学校PCで利用できます。<br /><br />
+                                        「他のPCで使う」ボタンを押すと表示される<br />
+                                        6桁の数字を入力するだけで、<br />
+                                        同じ出席データを引き継げます。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "データはクラウドに保存されますか？",
+                                answer: (
+                                    <>
+                                        常時保存はされません。<br />
+                                        • 通常の作業データは端末内に保存されます<br />
+                                        • 同期操作を行ったときのみ、一時的にサーバーへ保存されます<br />
+                                        • 同期用データは一定時間後に自動削除されます<br /><br />
+                                        個人情報を常にインターネット上に置かない設計です。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "インターネットが無い教室でも使えますか？",
+                                answer: (
+                                    <>
+                                        はい、使えます。<br /><br />
+                                        出席入力や確認は<br />
+                                        オフライン環境でも利用可能です。<br /><br />
+                                        ※ 他の端末へデータを移す場合のみ、<br />
+                                        インターネット接続が必要です。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "バックアップは取れますか？",
+                                answer: (
+                                    <>
+                                        はい、取れます。<br /><br />
+                                        現在の出席データを<br />
+                                        パスワード付きファイルとして保存できます。<br />
+                                        • USBメモリへの保存<br />
+                                        • 別のPCへの移行<br /><br />
+                                        などが可能です。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "パスワードを忘れたらどうなりますか？",
+                                answer: (
+                                    <>
+                                        バックアップファイルは復元できません。<br /><br />
+                                        安全性を重視しているため、<br />
+                                        パスワードを忘れた場合の復元手段はありません。<br /><br />
+                                        大切なデータの場合は<br />
+                                        パスワードを控える／定期的に再バックアップをおすすめします。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "サポートはありますか？",
+                                answer: (
+                                    <>
+                                        マニュアル・FAQでのサポートが中心です。<br /><br />
+                                        個人向けツールのため、<br />
+                                        電話サポートや個別対応は行っていません。<br /><br />
+                                        その分、<br />
+                                        価格を抑えて提供しています。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "学校全体で使いたい場合は？",
+                                answer: (
+                                    <>
+                                        学校・学科単位での利用や<br />
+                                        カスタマイズをご希望の場合は、<br />
+                                        別途ご相談ください。<br /><br />
+                                        （個人向け価格とは異なります）
+                                    </>
+                                )
+                            },
+                            {
+                                question: "データが消えることはありませんか？",
+                                answer: (
+                                    <>
+                                        通常の利用で、<br />
+                                        突然データが消えることはありません。<br /><br />
+                                        ただし、<br />
+                                        • PCの故障<br />
+                                        • ブラウザデータの削除<br /><br />
+                                        に備えて、<br />
+                                        定期的なバックアップをおすすめしています。
+                                    </>
+                                )
+                            },
+                            {
+                                question: "どんな先生に向いていますか？",
+                                answer: (
+                                    <>
+                                        • 担任を持っている先生<br />
+                                        • 出席管理を紙から切り替えたい方<br />
+                                        • 教室ではタブレットを使いたい方<br />
+                                        • 面倒なシステムは使いたくない方<br /><br />
+                                        に向いています。
+                                    </>
+                                )
+                            }
+                        ].map((faq, i) => (
+                            <AccordionItem key={i} value={`item-${i}`}>
+                                <AccordionTrigger className="text-left text-lg font-medium text-slate-900">
+                                    Q{i + 1}. {faq.question}
+                                </AccordionTrigger>
+                                <AccordionContent className="text-slate-600 leading-relaxed text-base pt-2 pr-4">
+                                    {faq.answer}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
                 </div>
             </section>
 
