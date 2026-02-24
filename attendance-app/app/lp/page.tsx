@@ -156,9 +156,10 @@ export default function LandingPage() {
                                 title: "特殊な時間計算に対応",
                                 description: (
                                     <>
-                                        「1.8時間×4限＝7.2時間」など、専門学校特有の集計も完全自動化。<br />
-                                        教科設定をすれば、現在の出席と必須時間の進捗も一目でわかります。<br />
-                                        <span className="text-xs text-slate-500 mt-2 block">※6限・8限対応版も開発中</span>
+                                        4限・6限・8限のコマ数切替に対応。<br />
+                                        「1コマ＝1.8h / 1.5h / 1.0h / 0.83h / 0.75h」など、<br />
+                                        学校ごとの時間計算に柔軟に対応できます。<br />
+                                        教科設定をすれば、現在の出席と必須時間の進捗も一目でわかります。
                                     </>
                                 ),
                                 color: "bg-blue-100 text-blue-600"
