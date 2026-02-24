@@ -95,6 +95,11 @@ export default function SettingsPage() {
                                     <Crown className="h-6 w-6 text-yellow-500 fill-yellow-500" />
                                     <span className="text-green-800">Pro ライセンス適用中</span>
                                 </>
+                            ) : licenseStatus === 'eval' ? (
+                                <>
+                                    <Crown className="h-6 w-6 text-blue-500 fill-blue-500" />
+                                    <span className="text-blue-800">1ヶ月評価版 適用中</span>
+                                </>
                             ) : (
                                 <>
                                     <ShieldAlert className="h-6 w-6 text-slate-500" />
@@ -102,8 +107,11 @@ export default function SettingsPage() {
                                 </>
                             )}
                         </CardTitle>
-                        {licenseStatus === 'pro' && (
-                            <div className="flex items-center gap-1 text-green-700 bg-green-100 px-3 py-1 rounded-full text-sm font-bold">
+                        {(licenseStatus === 'pro' || licenseStatus === 'eval') && (
+                            <div className={cn(
+                                "flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold",
+                                licenseStatus === 'pro' ? "text-green-700 bg-green-100" : "text-blue-700 bg-blue-100"
+                            )}>
                                 <ShieldCheck className="w-4 h-4" />
                                 <span>有効</span>
                             </div>
@@ -111,12 +119,14 @@ export default function SettingsPage() {
                     </div>
                     <CardDescription>
                         {licenseStatus === 'pro'
-                            ? `有効期限: ${licenseExpiry ? format(licenseExpiry, 'yyyy年MM月dd日') : '無期限'}`
-                            : '現在「無料版」を利用中です。学生数は5名まで登録可能です。'}
+                            ? `有効期限: ${licenseExpiry ? format(licenseExpiry, 'yyyy年MM月dd日') : '無期限'} (1年間)`
+                            : licenseStatus === 'eval'
+                                ? `有効期限: ${licenseExpiry ? format(licenseExpiry, 'yyyy年MM月dd日') : '無期限'} (1ヶ月)`
+                                : '現在「無料版」を利用中です。学生数は5名まで登録可能です。'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {licenseStatus !== 'pro' ? (
+                    {(licenseStatus !== 'pro' && licenseStatus !== 'eval') ? (
                         <div className="space-y-4">
                             <div className="bg-slate-100 p-4 rounded-lg">
                                 <p className="text-sm text-slate-600 mb-4">
@@ -132,8 +142,13 @@ export default function SettingsPage() {
                                     />
                                     <Button
                                         onClick={() => {
-                                            if (activateLicense(activationKey)) {
+                                            const result = activateLicense(activationKey);
+                                            if (result === 'pro') {
                                                 alert('Proライセンスが有効になりました！ありがとうございます。\n\n学生数の制限が解除されました。');
+                                                setActivationKey('');
+                                                window.location.reload();
+                                            } else if (result === 'eval') {
+                                                alert('1ヶ月の評価ライセンスが有効になりました！\n\n学生数の制限が解除され、1ヶ月間お試しいただけます。');
                                                 setActivationKey('');
                                                 window.location.reload();
                                             } else {

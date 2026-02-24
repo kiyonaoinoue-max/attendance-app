@@ -85,6 +85,6 @@ export interface AppState {
   // License
   licenseKey: string | null;
   licenseExpiry: number | null;
-  activateLicense: (key: string) => boolean;
-  getLicenseStatus: () => 'free' | 'pro' | 'expired';
+  activateLicense: (key: string) => false | 'pro' | 'eval';
+  getLicenseStatus: () => 'free' | 'pro' | 'eval' | 'expired';
 }

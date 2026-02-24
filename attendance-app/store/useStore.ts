@@ -67,7 +67,7 @@ export const useStore = create<AppState>()(
             addStudent: (student) => set((state) => {
                 // License Limit Check
                 const status = get().getLicenseStatus();
-                if (status !== 'pro' && state.students.length >= 5) {
+                if (status !== 'pro' && status !== 'eval' && state.students.length >= 5) {
                     // Ideally throw error or return false, but simple guard here
                     return state;
                 }
@@ -245,6 +245,7 @@ export const useStore = create<AppState>()(
                 // Hardcoded validation for MVP
                 // In production, this should check against an API or hash
                 const VALID_KEY = "ANTIG2026PRO";
+                const EVAL_KEY = "EVAL20261M";
 
                 if (key === VALID_KEY) {
                     const oneYearFromNow = new Date();
@@ -254,8 +255,20 @@ export const useStore = create<AppState>()(
                         licenseKey: key,
                         licenseExpiry: oneYearFromNow.getTime()
                     });
-                    return true;
+                    return 'pro';
                 }
+
+                if (key === EVAL_KEY) {
+                    const oneMonthFromNow = new Date();
+                    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+
+                    set({
+                        licenseKey: key,
+                        licenseExpiry: oneMonthFromNow.getTime()
+                    });
+                    return 'eval';
+                }
+
                 return false;
             },
 
@@ -264,6 +277,9 @@ export const useStore = create<AppState>()(
                 if (!state.licenseKey || !state.licenseExpiry) return 'free';
 
                 if (Date.now() > state.licenseExpiry) return 'expired';
+
+                const EVAL_KEY = "EVAL20261M";
+                if (state.licenseKey === EVAL_KEY) return 'eval';
 
                 return 'pro';
             },
