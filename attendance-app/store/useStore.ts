@@ -177,9 +177,9 @@ export const useStore = create<AppState>()(
                 const data = {
                     students: state.students,
                     subjects: state.subjects,
-                    attendanceRecords: state.attendanceRecords,
-                    calendar: state.calendar,
                     settings: state.settings,
+                    licenseKey: state.licenseKey,
+                    licenseExpiry: state.licenseExpiry,
                 };
                 // Evaluate explicit checking for UTF-8 characters if needed, but for now simple btoa
                 // Use Buffer or unicode safe encoding if Japanese characters are involved (yes they are!).
@@ -200,7 +200,9 @@ export const useStore = create<AppState>()(
                         subjects: data.subjects,
                         attendanceRecords: data.attendanceRecords,
                         calendar: data.calendar,
-                        settings: data.settings
+                        settings: data.settings,
+                        ...(data.licenseKey !== undefined && { licenseKey: data.licenseKey }),
+                        ...(data.licenseExpiry !== undefined && { licenseExpiry: data.licenseExpiry })
                     });
                     // Force persist? persist middleware handles set.
                     return true;
