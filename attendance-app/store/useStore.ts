@@ -55,6 +55,8 @@ export const useStore = create<AppState>()(
                     start: format(new Date(), 'yyyy-MM-dd'),
                     end: format(endOfYear(new Date()), 'yyyy-MM-dd')
                 },
+                periodCount: 4,
+                hourPerPeriod: 1.8,
                 timetables: {
                     year1: { first: {}, second: {} },
                     year2: { first: {}, second: {} }
@@ -227,6 +229,8 @@ export const useStore = create<AppState>()(
                         start: format(new Date(), 'yyyy-MM-dd'),
                         end: format(endOfYear(new Date()), 'yyyy-MM-dd')
                     },
+                    periodCount: 4,
+                    hourPerPeriod: 1.8,
                     timetables: {
                         year1: { first: {}, second: {} },
                         year2: { first: {}, second: {} }
@@ -300,6 +304,8 @@ export const useStore = create<AppState>()(
                         start: format(new Date(), 'yyyy-MM-dd'),
                         end: format(endOfYear(new Date()), 'yyyy-MM-dd')
                     },
+                    periodCount: 4,
+                    hourPerPeriod: 1.8,
                     timetables: {
                         year1: { first: {}, second: {} },
                         year2: { first: {}, second: {} }

@@ -20,10 +20,10 @@ const STATUS_SYMBOLS: Record<AttendanceStatus, { symbol: string, color: string }
     early_leave: { symbol: '早', color: 'text-orange-500' },
 };
 
-const PERIODS = [0, 1, 2, 3, 4]; // 0=HR
+const getPeriods = (count: number) => [0, ...Array.from({ length: count }, (_, i) => i + 1)]; // 0=HR
 
 export default function AttendanceListPage() {
-    const { students, attendanceRecords, calendar } = useStore();
+    const { students, attendanceRecords, calendar, settings } = useStore();
     const [mounted, setMounted] = useState(false);
     const [targetMonth, setTargetMonth] = useState(new Date());
     const [selectedGrade, setSelectedGrade] = useState<number>(1);
@@ -139,7 +139,7 @@ export default function AttendanceListPage() {
                                         const isSun = dayOfWeek === 0;
 
                                         return (
-                                            <th key={dateStr} colSpan={5} className={cn(
+                                            <th key={dateStr} colSpan={1 + (settings.periodCount ?? 4)} className={cn(
                                                 "border-b border-r border-slate-300 text-center min-w-[150px]", // 30px * 5
                                                 isHoliday ? "bg-red-50" : isSat ? "bg-blue-50" : isSun ? "bg-red-50" : "bg-white"
                                             )}>
@@ -160,7 +160,7 @@ export default function AttendanceListPage() {
                                     </th>
                                     {/* Period Headers (Repeated) */}
                                     {daysInMonth.map(day => (
-                                        PERIODS.map(p => (
+                                        getPeriods(settings.periodCount ?? 4).map(p => (
                                             <th key={`${day.toISOString()}-${p}`} className={cn(
                                                 "border-b border-r border-slate-200 p-1 text-[10px] text-center font-normal w-[30px]",
                                                 p === 0 ? "bg-slate-100 text-slate-600" : "bg-white text-slate-400"
@@ -174,7 +174,7 @@ export default function AttendanceListPage() {
                             <tbody>
                                 {filteredStudents.length === 0 ? (
                                     <tr>
-                                        <td colSpan={1 + daysInMonth.length * 5} className="p-8 text-center text-muted-foreground">
+                                        <td colSpan={1 + daysInMonth.length * (1 + (settings.periodCount ?? 4))} className="p-8 text-center text-muted-foreground">
                                             {selectedGrade}年生の学生は登録されていません。
                                         </td>
                                     </tr>
@@ -194,7 +194,7 @@ export default function AttendanceListPage() {
                                             const calConfig = calendar.find(c => c.date === dateStr);
                                             const isHoliday = calConfig?.isHoliday || getDay(day) === 0 || getDay(day) === 6;
 
-                                            return PERIODS.map(p => {
+                                            return getPeriods(settings.periodCount ?? 4).map(p => {
                                                 const status = getStatusSymbol(student.id, dateStr, p);
                                                 return (
                                                     <td key={`${dateStr}-${p}`} className={cn(

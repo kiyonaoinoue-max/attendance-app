@@ -20,12 +20,9 @@ const STATUS_CONFIG: Record<AttendanceStatus, { label: string, color: string, ic
     early_leave: { label: '早退', color: 'bg-orange-100 text-orange-800 border-orange-300', icon: TimerOff },
 };
 
-const PERIODS = [
+const PERIOD_LABELS = (count: number) => [
     { id: 0, label: 'HR' },
-    { id: 1, label: '1限' },
-    { id: 2, label: '2限' },
-    { id: 3, label: '3限' },
-    { id: 4, label: '4限' },
+    ...Array.from({ length: count }, (_, i) => ({ id: i + 1, label: `${i + 1}限` }))
 ];
 
 // Type for last action (for undo functionality)
@@ -39,6 +36,8 @@ export default function AttendancePage() {
     const { students, attendanceRecords, calendar, toggleAttendance, settings, subjects } = useStore();
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [period, setPeriod] = useState(0); // 0 = HR
+
+    const PERIODS = PERIOD_LABELS(settings.periodCount ?? 4);
     const [zoomLevel, setZoomLevel] = useState(1); // 0.4 to 1.4
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);

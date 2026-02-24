@@ -33,6 +33,9 @@ export interface AppSettings {
   termEndDate: string;
   firstTerm: { start: string; end: string };
   secondTerm: { start: string; end: string };
+  // Period configuration
+  periodCount: 4 | 6 | 8;
+  hourPerPeriod: number;
   // Timetables structured by Grade -> Term
   timetables: {
     year1: {

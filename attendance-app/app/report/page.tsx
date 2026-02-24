@@ -96,7 +96,10 @@ export default function ReportPage() {
             // New Nested Structure
             const timetable = settings.timetables?.[gradeKey]?.[termKey];
 
-            [1, 2, 3, 4].forEach(period => {
+            const periodCount = settings.periodCount ?? 4;
+            const hourPerPeriod = settings.hourPerPeriod ?? 1.8;
+
+            Array.from({ length: periodCount }, (_, i) => i + 1).forEach(period => {
                 const key = `${dayStr}-${period}`;
                 const subjectId = timetable?.[key];
 
@@ -111,14 +114,14 @@ export default function ReportPage() {
                         // Late (遅刻) and early_leave (早退) count as PRESENT
                         if (record.status !== 'absent') {
                             presentCount++;
-                            subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
+                            subjectHours[subjectId] = (subjectHours[subjectId] || 0) + hourPerPeriod;
                         }
                         // Absent does not count as present, no hours added
                     } else {
                         // No record for this specific period, but day has some records
                         // Treat as present (implicit attendance for that period)
                         presentCount++;
-                        subjectHours[subjectId] = (subjectHours[subjectId] || 0) + 1.8;
+                        subjectHours[subjectId] = (subjectHours[subjectId] || 0) + hourPerPeriod;
                     }
                 }
             });
@@ -201,7 +204,7 @@ export default function ReportPage() {
                 </tbody>
             </table>
             <div className="mt-2 text-xs text-slate-500 text-right">
-                ※履修時間は1コマ1.8時間で計算
+                ※履修時間は1コマ{settings.hourPerPeriod ?? 1.8}時間で計算
             </div>
         </div>
     );

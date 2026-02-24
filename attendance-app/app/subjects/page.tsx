@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']; // Key format matching attendance/report pages
 const DAY_LABELS = ['月', '火', '水', '木', '金']; // Display labels
-const PERIODS = [1, 2, 3, 4];
+
+const getPeriods = (count: number) => Array.from({ length: count }, (_, i) => i + 1);
 
 export default function SubjectsPage() {
     const { subjects, addSubject, deleteSubject, settings, updateSettings } = useStore();
@@ -167,6 +168,55 @@ export default function SubjectsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
+                    {/* Period Count Toggle */}
+                    <div className="mb-6 space-y-4">
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-bold text-slate-700 min-w-[80px]">コマ数:</span>
+                            <div className="bg-slate-100 p-1 rounded-lg flex items-center">
+                                {([4, 6, 8] as const).map((count) => (
+                                    <button
+                                        key={count}
+                                        className={cn(
+                                            "px-5 py-2 rounded text-sm font-bold transition-all",
+                                            settings.periodCount === count
+                                                ? "bg-white shadow text-slate-900"
+                                                : "text-slate-500 hover:text-slate-700"
+                                        )}
+                                        onClick={() => {
+                                            const hourDefault = count === 4 ? 1.8 : 1.0;
+                                            updateSettings({ periodCount: count, hourPerPeriod: hourDefault });
+                                        }}
+                                    >
+                                        {count}限
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-bold text-slate-700 min-w-[80px]">1コマ:</span>
+                            <div className="bg-slate-100 p-1 rounded-lg flex items-center">
+                                {(settings.periodCount === 4
+                                    ? [{ value: 1.8, label: '1.8h' }, { value: 1.5, label: '1.5h' }]
+                                    : [{ value: 1.0, label: '1.0h' }, { value: 0.83, label: '0.83h (50分)' }, { value: 0.75, label: '0.75h (45分)' }]
+                                ).map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        className={cn(
+                                            "px-5 py-2 rounded text-sm font-bold transition-all",
+                                            settings.hourPerPeriod === opt.value
+                                                ? "bg-white shadow text-slate-900"
+                                                : "text-slate-500 hover:text-slate-700"
+                                        )}
+                                        onClick={() => updateSettings({ hourPerPeriod: opt.value })}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <span className="text-xs text-slate-400">※ 集計出力時の履修時間計算に使用</span>
+                        </div>
+                    </div>
+
                     <Tabs defaultValue="first" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 mb-4">
                             <TabsTrigger value="first">前期 ({settings.firstTerm?.start} 〜 {settings.firstTerm?.end})</TabsTrigger>
@@ -185,7 +235,7 @@ export default function SubjectsPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {PERIODS.map(p => (
+                                        {getPeriods(settings.periodCount).map(p => (
                                             <tr key={p}>
                                                 <td className="border p-2 font-bold text-center bg-slate-50">{p}限</td>
                                                 {DAYS.map((dayKey, i) => {
@@ -226,7 +276,7 @@ export default function SubjectsPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {PERIODS.map(p => (
+                                        {getPeriods(settings.periodCount).map(p => (
                                             <tr key={p}>
                                                 <td className="border p-2 font-bold text-center bg-slate-50">{p}限</td>
                                                 {DAYS.map((dayKey, i) => {
