@@ -58,10 +58,13 @@ export interface AppState {
   syncCode: string | null;
   syncExpiresAt: number | null;
   lastSyncTime: number | null;
+  selectedGrade: number;
 
   addStudent: (student: Omit<Student, 'id'>) => void;
   updateStudent: (id: string, data: Partial<Student>) => void;
   deleteStudent: (id: string) => void;
+
+  setSelectedGrade: (grade: number) => void;
 
   addSubject: (subject: Omit<Subject, 'id'>) => void;
   updateSubject: (id: string, data: Partial<Subject>) => void;

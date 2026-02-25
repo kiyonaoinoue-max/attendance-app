@@ -33,7 +33,7 @@ interface LastAction {
 }
 
 export default function AttendancePage() {
-    const { students, attendanceRecords, calendar, toggleAttendance, settings, subjects } = useStore();
+    const { students, attendanceRecords, calendar, toggleAttendance, settings, subjects, selectedGrade, setSelectedGrade } = useStore();
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [period, setPeriod] = useState(0); // 0 = HR
 
@@ -41,7 +41,6 @@ export default function AttendancePage() {
     const [zoomLevel, setZoomLevel] = useState(1); // 0.4 to 1.4
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
-    const [selectedGrade, setSelectedGrade] = useState<number>(1);
     const studentRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     // Input protection state

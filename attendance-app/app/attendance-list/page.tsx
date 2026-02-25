@@ -23,10 +23,9 @@ const STATUS_SYMBOLS: Record<AttendanceStatus, { symbol: string, color: string }
 const getPeriods = (count: number) => [0, ...Array.from({ length: count }, (_, i) => i + 1)]; // 0=HR
 
 export default function AttendanceListPage() {
-    const { students, attendanceRecords, calendar, settings } = useStore();
+    const { students, attendanceRecords, calendar, settings, selectedGrade, setSelectedGrade } = useStore();
     const [mounted, setMounted] = useState(false);
     const [targetMonth, setTargetMonth] = useState(new Date());
-    const [selectedGrade, setSelectedGrade] = useState<number>(1);
 
     useEffect(() => {
         setMounted(true);

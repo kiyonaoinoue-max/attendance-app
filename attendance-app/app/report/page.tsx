@@ -9,10 +9,9 @@ import { utils, writeFile } from 'xlsx';
 import { cn } from '@/lib/utils';
 
 export default function ReportPage() {
-    const { students, subjects, attendanceRecords, calendar, settings } = useStore();
+    const { students, attendanceRecords, settings, subjects, calendar, selectedGrade, setSelectedGrade } = useStore();
     const [mounted, setMounted] = useState(false);
     const [targetMonth, setTargetMonth] = useState(format(new Date(), 'yyyy-MM'));
-    const [selectedGrade, setSelectedGrade] = useState<number>(1);
 
     useEffect(() => {
         setMounted(true);

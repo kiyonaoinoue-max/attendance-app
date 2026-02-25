@@ -14,10 +14,9 @@ const DAY_LABELS = ['月', '火', '水', '木', '金']; // Display labels
 const getPeriods = (count: number) => Array.from({ length: count }, (_, i) => i + 1);
 
 export default function SubjectsPage() {
-    const { subjects, addSubject, deleteSubject, settings, updateSettings } = useStore();
+    const { subjects, addSubject, deleteSubject, settings, updateSettings, selectedGrade, setSelectedGrade } = useStore();
     const [formData, setFormData] = useState({ name: '', teacher: '', requiredHours: '' });
     const [mounted, setMounted] = useState(false);
-    const [selectedGrade, setSelectedGrade] = useState<number>(1);
 
     useEffect(() => {
         setMounted(true);

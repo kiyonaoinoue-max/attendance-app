@@ -65,6 +65,7 @@ export const useStore = create<AppState>()(
             syncCode: null,
             syncExpiresAt: null,
             lastSyncTime: null,
+            selectedGrade: 1,
 
             addStudent: (student) => set((state) => {
                 // License Limit Check
@@ -168,6 +169,8 @@ export const useStore = create<AppState>()(
                 set({ calendar });
             },
 
+            setSelectedGrade: (grade) => set({ selectedGrade: grade }),
+
             toggleHoliday: (date) => set((state) => ({
                 calendar: state.calendar.map(c =>
                     c.date === date ? { ...c, isHoliday: !c.isHoliday } : c
@@ -179,6 +182,8 @@ export const useStore = create<AppState>()(
                 const data = {
                     students: state.students,
                     subjects: state.subjects,
+                    attendanceRecords: state.attendanceRecords,
+                    calendar: state.calendar,
                     settings: state.settings,
                     licenseKey: state.licenseKey,
                     licenseExpiry: state.licenseExpiry,
