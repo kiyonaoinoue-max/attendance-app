@@ -116,12 +116,8 @@ export default function ReportPage() {
                             subjectHours[subjectId] = (subjectHours[subjectId] || 0) + hourPerPeriod;
                         }
                         // Absent does not count as present, no hours added
-                    } else {
-                        // No record for this specific period, but day has some records
-                        // Treat as present (implicit attendance for that period)
-                        presentCount++;
-                        subjectHours[subjectId] = (subjectHours[subjectId] || 0) + hourPerPeriod;
                     }
+                    // No record for this period = not entered yet, do NOT count as present
                 }
             });
         });
