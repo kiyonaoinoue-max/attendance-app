@@ -64,7 +64,7 @@ export default function LandingPage() {
                 <div className="container mx-auto px-4 relative z-10 text-center">
                     <div className="inline-flex items-center px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-medium mb-8 animate-fade-in-up">
                         <Zap className="w-4 h-4 mr-2" />
-                        先生のための新しい出席管理ツール
+                        担任の先生のための新しい出席管理ツール
                     </div>
                     <h1 className="text-4xl md:text-6xl font-bold text-slate-900 mb-6 leading-tight tracking-tight">
                         出席管理を、
@@ -167,7 +167,12 @@ export default function LandingPage() {
                             {
                                 icon: <Cloud className="h-6 w-6" />,
                                 title: "かんたんクラウド同期",
-                                description: "クラウドに大事なデータ預けっぱなしにしてませんか？ かんたんクラウド同期では、合言葉で一時的にデータを中継するだけ。クラウドにデータを保存し続けないので、個人情報も安心です。",
+                                description: (
+                                    <>
+                                        クラウドに大事なデータ預けっぱなしにしてませんか？<br />
+                                        かんたんクラウド同期では、合言葉で一時的にデータを中継するだけ。クラウドにデータを保存し続けないので、個人情報も安心です。
+                                    </>
+                                ),
                                 color: "bg-indigo-100 text-indigo-600"
                             },
                             {
