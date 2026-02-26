@@ -167,13 +167,19 @@ export default function LandingPage() {
                             {
                                 icon: <Cloud className="h-6 w-6" />,
                                 title: "かんたんクラウド同期",
-                                description: "「合言葉」で一時的にデータを中継するだけ。クラウドにデータを保存し続けないので、個人情報も安心です。",
+                                description: "クラウドに大事なデータ預けっぱなしにしてませんか？ かんたんクラウド同期では、合言葉で一時的にデータを中継するだけ。クラウドにデータを保存し続けないので、個人情報も安心です。",
                                 color: "bg-indigo-100 text-indigo-600"
                             },
                             {
                                 icon: <FileSpreadsheet className="h-6 w-6" />,
                                 title: "Excelレポート出力",
-                                description: "月次の出席率や公欠日数を自動集計し、Excel形式でダウンロード可能。",
+                                description: (
+                                    <>
+                                        月次の出席率や公欠日数を自動集計し、Excel形式でダウンロード可能。<br />
+                                        留学生の在留カード更新時に提出する年間出席率も推移データで簡単出力。<br />
+                                        <span className="text-xs text-slate-500 mt-2 block">※カレンダー設定や教科設定が必要になる項目もあります</span>
+                                    </>
+                                ),
                                 color: "bg-green-100 text-green-600"
                             },
                             {
