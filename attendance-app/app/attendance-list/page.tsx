@@ -4,13 +4,12 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { format, parseISO, eachDayOfInterval, getDay, isSameMonth } from 'date-fns';
+import { format, parseISO, eachDayOfInterval, getDay, isSameMonth, isSaturday, isSunday } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-// ... imports
-import { AttendanceStatus } from '@/types';
+import { AttendanceStatus, AttendanceRecord } from '@/types';
 
 // Symbol mapping for "Paper Attendance Book" style
 const STATUS_SYMBOLS: Record<AttendanceStatus, { symbol: string, color: string }> = {
@@ -23,7 +22,7 @@ const STATUS_SYMBOLS: Record<AttendanceStatus, { symbol: string, color: string }
 const getPeriods = (count: number) => [0, ...Array.from({ length: count }, (_, i) => i + 1)]; // 0=HR
 
 export default function AttendanceListPage() {
-    const { students, attendanceRecords, calendar, settings, selectedGrade, setSelectedGrade } = useStore();
+    const { students, attendanceRecords, calendar, settings, subjects, selectedGrade, setSelectedGrade } = useStore();
     const [mounted, setMounted] = useState(false);
     const [targetMonth, setTargetMonth] = useState(new Date());
 
@@ -62,6 +61,67 @@ export default function AttendanceListPage() {
         const newDate = new Date(targetMonth);
         newDate.setMonth(newDate.getMonth() + offset);
         setTargetMonth(newDate);
+    };
+
+    // --- Timetable helper: check if a period on a given day has a subject assigned ---
+    const DAY_KEYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const gradeKey: 'year1' | 'year2' = selectedGrade === 1 ? 'year1' : 'year2';
+
+    const hasSubjectInTimetable = (dateStr: string, period: number): boolean => {
+        if (period === 0) return false; // HR is never in timetable
+        const d = parseISO(dateStr);
+        const dayStr = DAY_KEYS[getDay(d)];
+        // Determine term
+        const secondTermStart = settings.secondTerm?.start || '';
+        const secondTermEnd = settings.secondTerm?.end || '';
+        const isSecondTerm = secondTermStart && secondTermEnd && dateStr >= secondTermStart && dateStr <= secondTermEnd;
+        const termKey: 'first' | 'second' = isSecondTerm ? 'second' : 'first';
+        const timetable = settings.timetables?.[gradeKey]?.[termKey];
+        const key = `${dayStr}-${period}`;
+        return !!timetable?.[key];
+    };
+
+    // --- Summary calculation (matches report/page.tsx calcStats logic) ---
+    const calcSummary = (studentId: string) => {
+        const periodCount = settings.periodCount ?? 4;
+        let totalSlots = 0;
+        let presentCount = 0;
+
+        daysInMonth.forEach(day => {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const calConfig = calendar.find(c => c.date === dateStr);
+            // Skip holidays
+            if (calConfig?.isHoliday) return;
+            // Skip Sat/Sun unless explicitly in calendar
+            if (isSaturday(day) || isSunday(day)) {
+                if (!calConfig || calConfig.isHoliday) return;
+            }
+            // Only count days where this student has at least one record
+            const hasRecord = attendanceRecords.some(r => r.studentId === studentId && r.date === dateStr);
+            if (!hasRecord) return;
+
+            const dayStr = DAY_KEYS[getDay(day)];
+            const secondTermStart = settings.secondTerm?.start || '';
+            const secondTermEnd = settings.secondTerm?.end || '';
+            const isSecondTerm = secondTermStart && secondTermEnd && dateStr >= secondTermStart && dateStr <= secondTermEnd;
+            const termKey: 'first' | 'second' = isSecondTerm ? 'second' : 'first';
+            const timetable = settings.timetables?.[gradeKey]?.[termKey];
+
+            for (let p = 1; p <= periodCount; p++) {
+                const key = `${dayStr}-${p}`;
+                const subjectId = timetable?.[key];
+                if (subjectId) {
+                    totalSlots++;
+                    const record = attendanceRecords.find(r => r.studentId === studentId && r.date === dateStr && r.period === p);
+                    if (record && record.status !== 'absent') {
+                        presentCount++;
+                    }
+                }
+            }
+        });
+
+        const rate = totalSlots > 0 ? ((presentCount / totalSlots) * 100).toFixed(1) : '0.0';
+        return { present: presentCount, total: totalSlots, rate };
     };
 
     // Helper to get status symbol
@@ -139,7 +199,7 @@ export default function AttendanceListPage() {
 
                                         return (
                                             <th key={dateStr} colSpan={1 + (settings.periodCount ?? 4)} className={cn(
-                                                "border-b border-r border-slate-300 text-center min-w-[150px]", // 30px * 5
+                                                "border-b border-r border-slate-300 text-center min-w-[150px]",
                                                 isHoliday ? "bg-red-50" : isSat ? "bg-blue-50" : isSun ? "bg-red-50" : "bg-white"
                                             )}>
                                                 <div className={cn(
@@ -151,6 +211,10 @@ export default function AttendanceListPage() {
                                             </th>
                                         );
                                     })}
+                                    {/* Summary Column Header */}
+                                    <th className="sticky right-0 z-20 bg-blue-50 border-b border-l-2 border-slate-300 p-2 min-w-[80px] text-center font-bold text-xs text-blue-700 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                        出席率
+                                    </th>
                                 </tr>
                                 <tr>
                                     {/* Sub-header for Sticky Col */}
@@ -159,15 +223,23 @@ export default function AttendanceListPage() {
                                     </th>
                                     {/* Period Headers (Repeated) */}
                                     {daysInMonth.map(day => (
-                                        getPeriods(settings.periodCount ?? 4).map(p => (
-                                            <th key={`${day.toISOString()}-${p}`} className={cn(
-                                                "border-b border-r border-slate-200 p-1 text-[10px] text-center font-normal w-[30px]",
-                                                p === 0 ? "bg-slate-100 text-slate-600" : "bg-white text-slate-400"
-                                            )}>
-                                                {p === 0 ? 'HR' : p}
-                                            </th>
-                                        ))
+                                        getPeriods(settings.periodCount ?? 4).map(p => {
+                                            const dateStr = format(day, 'yyyy-MM-dd');
+                                            const hasSub = hasSubjectInTimetable(dateStr, p);
+                                            return (
+                                                <th key={`${day.toISOString()}-${p}`} className={cn(
+                                                    "border-b border-r border-slate-200 p-1 text-[10px] text-center font-normal w-[30px]",
+                                                    p === 0 ? "bg-slate-100 text-slate-600" : hasSub ? "bg-white text-slate-400" : "bg-slate-200/60 text-slate-300"
+                                                )}>
+                                                    {p === 0 ? 'HR' : p}
+                                                </th>
+                                            );
+                                        })
                                     ))}
+                                    {/* Summary Sub-header */}
+                                    <th className="sticky right-0 z-20 bg-blue-50 border-b border-l-2 border-slate-300 p-1 text-[10px] text-center text-blue-500 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                        出席/必須
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -195,23 +267,40 @@ export default function AttendanceListPage() {
 
                                             return getPeriods(settings.periodCount ?? 4).map(p => {
                                                 const status = getStatusSymbol(student.id, dateStr, p);
+                                                const hasSub = hasSubjectInTimetable(dateStr, p);
+                                                const isNoSubjectSlot = p !== 0 && !hasSub && !isHoliday;
                                                 return (
                                                     <td key={`${dateStr}-${p}`} className={cn(
                                                         "border-b border-r border-slate-200 text-center h-[32px] p-0 align-middle",
-                                                        isHoliday ? "bg-slate-100/50" : "", // Holiday background
-                                                        p === 0 && !isHoliday ? "bg-slate-50/50" : "" // Subtle HR background
+                                                        isHoliday ? "bg-slate-100/50" : "",
+                                                        p === 0 && !isHoliday ? "bg-slate-50/50" : "",
+                                                        isNoSubjectSlot ? "bg-slate-200/40" : ""
                                                     )}>
                                                         {status ? (
                                                             <span className={cn("font-bold text-sm", status.color)}>
                                                                 {status.symbol}
                                                             </span>
                                                         ) : (
-                                                            <span className="text-slate-200 text-[10px]">-</span>
+                                                            <span className={cn("text-[10px]", isNoSubjectSlot ? "text-slate-300" : "text-slate-200")}>-</span>
                                                         )}
                                                     </td>
                                                 );
                                             });
                                         })}
+                                        {/* Summary Cell */}
+                                        {(() => {
+                                            const summary = calcSummary(student.id);
+                                            return (
+                                                <td className="sticky right-0 z-10 bg-blue-50 border-b border-l-2 border-slate-300 px-2 py-1 text-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                                    <div className="text-sm font-bold text-blue-700">
+                                                        {summary.rate}%
+                                                    </div>
+                                                    <div className="text-[10px] text-blue-500">
+                                                        {summary.present}/{summary.total}
+                                                    </div>
+                                                </td>
+                                            );
+                                        })()}
                                     </tr>
                                 ))}
                             </tbody>

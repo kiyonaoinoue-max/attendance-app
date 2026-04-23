@@ -36,9 +36,11 @@ export default function ReportPage() {
             const dStr = format(d, 'yyyy-MM-dd');
             const calConfig = calendar.find(c => c.date === dStr);
             if (calConfig?.isHoliday) return false;
-            // Default to Mon-Fri if no calendar
-            if (calendar.length > 0) return true;
-            return !isSaturday(d) && !isSunday(d);
+            // Sat/Sun are excluded by default, unless explicitly set in calendar as non-holiday
+            if (isSaturday(d) || isSunday(d)) {
+                return calConfig ? !calConfig.isHoliday : false;
+            }
+            return true;
         });
     };
 
@@ -142,7 +144,9 @@ export default function ReportPage() {
             subjectHours,
             subjectHeldHours,
             late,
-            early
+            early,
+            daysCount: validDays.length,
+            daysList: validDays.map(d => format(d, 'M/d')).join(', ')
         };
     };
 
@@ -179,6 +183,7 @@ export default function ReportPage() {
                                 <td className="border p-2 font-bold">
                                     {stat.rate}%
                                     <span className="text-xs text-muted-foreground block">({stat.present}/{stat.total})</span>
+                                    <span className="text-[10px] text-slate-400 block" title={stat.daysList}>{stat.daysCount}日間</span>
                                 </td>
                                 <td className="border p-2">{stat.late}</td>
                                 <td className="border p-2">{stat.early}</td>
@@ -255,7 +260,7 @@ export default function ReportPage() {
         const today = new Date();
         const currentYear = today.getMonth() < 3 ? today.getFullYear() - 1 : today.getFullYear(); // School year starts in April
 
-        const months = [];
+        const months: Date[] = [];
         for (let i = 0; i < 12; i++) {
             months.push(new Date(currentYear, 3 + i, 1)); // Apr is 3
         }

@@ -235,9 +235,9 @@ export default function AttendancePage() {
                     「学生管理」メニューから学生を登録してください。
                 </Card>
             ) : (
-                <div className="flex gap-4 items-start">
+                <div className="relative">
                     {/* Left: Student List */}
-                    <div className="flex-1 space-y-2 pb-40">
+                    <div className="mr-52 space-y-2 pb-40">
                         {filteredStudents.map((student: Student, index: number) => {
                             const currentPeriodStatus = getStatus(student.id, period);
                             const isSelected = selectedStudentId === student.id;
@@ -320,7 +320,7 @@ export default function AttendancePage() {
                     </div>
 
                     {/* Right: Fixed Control Panel */}
-                    <div className="w-48 sticky top-40 bg-white rounded-xl border border-slate-200 shadow-xl p-4 space-y-4">
+                    <div className="w-48 fixed top-40 right-8 bg-white rounded-xl border border-slate-200 shadow-xl p-4 space-y-4 z-30">
                         <div className="text-center border-b pb-2">
                             <div className="text-xs text-slate-500">選択中</div>
                             <div className="font-bold text-lg truncate">
