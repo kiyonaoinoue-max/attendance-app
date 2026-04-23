@@ -320,7 +320,7 @@ export default function AttendancePage() {
                     </div>
 
                     {/* Right: Fixed Control Panel */}
-                    <div className="w-48 fixed top-[200px] right-8 bg-white rounded-xl border border-slate-200 shadow-xl p-4 space-y-4 z-10">
+                    <div className="w-48 fixed top-[260px] right-8 bg-white rounded-xl border border-slate-200 shadow-xl p-4 space-y-4 z-20">
                         <div className="text-center border-b pb-2">
                             <div className="text-xs text-slate-500">選択中</div>
                             <div className="font-bold text-lg truncate">
