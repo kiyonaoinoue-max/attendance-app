@@ -17,8 +17,8 @@ export function MainNav() {
     const pathname = usePathname();
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white md:relative md:border-t-0 md:border-r md:w-64 md:h-screen md:flex-col md:p-4">
-            <div className="flex justify-around md:flex-col md:space-y-2">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white md:relative md:border-t-0 md:border-r md:w-44 md:h-screen md:flex-col md:p-2">
+            <div className="flex justify-around md:flex-col md:space-y-1">
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href;
@@ -27,14 +27,14 @@ export function MainNav() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex flex-col items-center p-2 text-xs md:flex-row md:text-sm md:p-3 md:rounded-lg",
+                                "flex flex-col items-center p-2 text-xs md:flex-row md:text-base md:p-3 md:rounded-lg md:gap-3",
                                 isActive
-                                    ? "text-blue-600 bg-blue-50"
-                                    : "text-slate-600 hover:bg-slate-50"
+                                    ? "text-blue-600 bg-blue-50 font-bold"
+                                    : "text-slate-600 hover:bg-slate-50 font-medium"
                             )}
                         >
-                            <Icon className="h-6 w-6 md:mr-3 md:h-5 md:w-5" />
-                            <span>{item.label}</span>
+                            <Icon className="h-6 w-6 md:h-6 md:w-6 flex-shrink-0" />
+                            <span className="truncate">{item.label}</span>
                         </Link>
                     );
                 })}

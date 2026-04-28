@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { format, parseISO, eachDayOfInterval, getDay, isSameMonth, isSaturday, isSunday } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowLeft, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AttendanceStatus, AttendanceRecord } from '@/types';
@@ -25,6 +25,7 @@ export default function AttendanceListPage() {
     const { students, attendanceRecords, calendar, settings, subjects, selectedGrade, setSelectedGrade } = useStore();
     const [mounted, setMounted] = useState(false);
     const [targetMonth, setTargetMonth] = useState(new Date());
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     useEffect(() => {
         setMounted(true);
@@ -171,21 +172,28 @@ export default function AttendanceListPage() {
                         <ChevronRight className="h-5 w-5" />
                     </Button>
                 </div>
+
+                {/* Zoom Control */}
+                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomLevel(Math.max(0.4, +(zoomLevel - 0.1).toFixed(1)))}>
+                        <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs font-mono w-10 text-center">{Math.round(zoomLevel * 100)}%</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoomLevel(Math.min(1.2, +(zoomLevel + 0.1).toFixed(1)))}>
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
 
             {/* Matrix Table Container */}
             <Card className="overflow-hidden border-slate-300 shadow-md">
                 <div className="overflow-x-auto">
-                    {/* 
-                        Use inline-block or flex to allow sticky column.
-                        We'll use a standard table structure.
-                    */}
-                    <div className="inline-block min-w-full align-middle">
+                    <div className="inline-block min-w-full align-middle" style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left', width: `${100 / zoomLevel}%` }}>
                         <table className="min-w-full border-collapse border-spacing-0">
                             <thead>
                                 <tr>
                                     {/* Sticky Name Column Header */}
-                                    <th className="sticky left-0 z-20 bg-slate-100 border-b border-r border-slate-300 p-2 min-w-[120px] text-center font-bold text-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                    <th className="sticky left-0 z-20 bg-slate-100 border-b border-r border-slate-300 p-2 min-w-[180px] text-center font-bold text-sm shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
                                         氏名
                                     </th>
                                     {/* Date Headers */}
@@ -252,10 +260,10 @@ export default function AttendanceListPage() {
                                 ) : filteredStudents.map((student, idx) => (
                                     <tr key={student.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}>
                                         {/* Sticky Name Cell */}
-                                        <td className="sticky left-0 z-10 bg-white border-b border-r border-slate-300 px-2 py-1 text-sm font-bold text-slate-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
+                                        <td className="sticky left-0 z-10 bg-white border-b border-r border-slate-300 px-2 py-1 text-sm font-bold text-slate-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px]">
                                             <div className="flex items-baseline gap-2">
-                                                <span className="text-[10px] text-slate-400 w-4">{student.studentNumber}</span>
-                                                <span>{student.name}</span>
+                                                <span className="text-[10px] text-slate-400 w-5 flex-shrink-0">{student.studentNumber}</span>
+                                                <span className="truncate">{student.name}</span>
                                             </div>
                                         </td>
 
