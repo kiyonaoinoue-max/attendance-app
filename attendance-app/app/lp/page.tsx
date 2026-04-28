@@ -396,6 +396,74 @@ export default function LandingPage() {
                 </div>
             </section >
 
+            {/* Updates Section */}
+            <section className="py-24 bg-slate-50 relative">
+                <div className="container mx-auto px-4 max-w-5xl">
+                    <div className="text-center mb-16">
+                        <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm font-bold mb-4">
+                            🆕 最新アップデート
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">進化し続ける出席管理</h2>
+                        <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                            現場の声をもとに、日々改善しています。
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-6 mb-12">
+                        <Card className="border-0 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white">
+                            <CardHeader>
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-amber-100 text-amber-600">
+                                    <Zap className="h-6 w-6" />
+                                </div>
+                                <CardTitle className="text-lg">⚡ 臨時時間割差し替え</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    急な授業変更にも即対応。時限ボタンを長押しするだけで、その日だけ別の教科に差し替えられます。
+                                    集計レポートにも自動反映。
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-0 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white">
+                            <CardHeader>
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-blue-100 text-blue-600">
+                                    <FileSpreadsheet className="h-6 w-6" />
+                                </div>
+                                <CardTitle className="text-lg">🔍 出席一覧ズーム機能</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    月間出席一覧を40%〜120%の範囲で自由に拡大・縮小。
+                                    大人数クラスでも全体を一目で把握できます。
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="border-0 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white">
+                            <CardHeader>
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3 bg-indigo-100 text-indigo-600">
+                                    <GraduationCap className="h-6 w-6" />
+                                </div>
+                                <CardTitle className="text-lg">📖 操作マニュアル内蔵</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-slate-600 text-sm leading-relaxed">
+                                    アプリ内に操作マニュアルを搭載。出席入力の基本操作から、臨時差し替えの便利な使い方、年度変更の手順まで、
+                                    いつでも確認できます。
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="text-center">
+                        <p className="text-sm text-slate-500">
+                            最終更新: 2026年4月28日
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             {/* FAQ Section */}
             < section id="faq" className="py-24 bg-white" >
                 <div className="container mx-auto px-4 max-w-3xl">
