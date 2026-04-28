@@ -177,6 +177,19 @@ export const useStore = create<AppState>()(
                 )
             })),
 
+            setTimetableOverride: (date, period, subjectId) => set((state) => {
+                const overrides = { ...(state.settings.timetableOverrides || {}) };
+                const key = `${date}-${period}`;
+                if (subjectId === null) {
+                    delete overrides[key];
+                } else {
+                    overrides[key] = subjectId;
+                }
+                return {
+                    settings: { ...state.settings, timetableOverrides: overrides }
+                };
+            }),
+
             exportData: () => {
                 const state = get();
                 const data = {

@@ -70,9 +70,12 @@ export default function AttendanceListPage() {
 
     const hasSubjectInTimetable = (dateStr: string, period: number): boolean => {
         if (period === 0) return false; // HR is never in timetable
+        // Check override first
+        const overrideKey = `${dateStr}-${period}`;
+        if (settings.timetableOverrides?.[overrideKey]) return true;
+
         const d = parseISO(dateStr);
         const dayStr = DAY_KEYS[getDay(d)];
-        // Determine term
         const secondTermStart = settings.secondTerm?.start || '';
         const secondTermEnd = settings.secondTerm?.end || '';
         const isSecondTerm = secondTermStart && secondTermEnd && dateStr >= secondTermStart && dateStr <= secondTermEnd;
@@ -110,7 +113,9 @@ export default function AttendanceListPage() {
 
             for (let p = 1; p <= periodCount; p++) {
                 const key = `${dayStr}-${p}`;
-                const subjectId = timetable?.[key];
+                // Check override first
+                const overrideKey = `${dateStr}-${p}`;
+                const subjectId = settings.timetableOverrides?.[overrideKey] || timetable?.[key];
                 if (subjectId) {
                     totalSlots++;
                     const record = attendanceRecords.find(r => r.studentId === studentId && r.date === dateStr && r.period === p);

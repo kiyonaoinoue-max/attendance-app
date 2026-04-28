@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, TimerOff, AlertCircle, Minus, Plus, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, TimerOff, AlertCircle, Minus, Plus, RotateCcw, Zap, X } from 'lucide-react';
 import { Student, AttendanceRecord, CalendarDay, Subject } from '@/types'; // Added imports
 // ... imports
 import { AttendanceStatus } from '@/types';
@@ -33,9 +33,11 @@ interface LastAction {
 }
 
 export default function AttendancePage() {
-    const { students, attendanceRecords, calendar, toggleAttendance, settings, subjects, selectedGrade, setSelectedGrade } = useStore();
+    const { students, attendanceRecords, calendar, toggleAttendance, settings, subjects, selectedGrade, setSelectedGrade, setTimetableOverride } = useStore();
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [period, setPeriod] = useState(0); // 0 = HR
+    const [overrideDialogPeriod, setOverrideDialogPeriod] = useState<number | null>(null);
+    const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const PERIODS = PERIOD_LABELS(settings.periodCount ?? 4);
     const [zoomLevel, setZoomLevel] = useState(1); // 0.4 to 1.4
@@ -129,19 +131,44 @@ export default function AttendancePage() {
     // Timetables updated to nested structure in previous step.
     const getSubjectName = (pId: number) => {
         if (pId === 0) return 'HR';
-        const dayOfWeek = format(d, 'EEE', { locale: ja }).replace('土', 'Sat').replace('日', 'Sun').replace('月', 'Mon').replace('火', 'Tue').replace('水', 'Wed').replace('木', 'Thu').replace('金', 'Fri');
-        // Map Japanese EEE back to Mon/Tue... or just use getDay()
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const dayStr = days[d.getDay()];
 
+        // Check override first
+        const overrideKey = `${date}-${pId}`;
+        const overrideSubjectId = settings.timetableOverrides?.[overrideKey];
+        if (overrideSubjectId) {
+            const subj = subjects.find((s: Subject) => s.id === overrideSubjectId);
+            return subj ? `⚡${subj.name}` : `${pId}限`;
+        }
+
         const key = `${dayStr}-${pId}`;
         const timetable = settings.timetables?.[gradeKey]?.[termKey] || {};
-
         const subjectId = timetable[key];
-
         if (!subjectId) return `${pId}限`;
         const subj = subjects.find((s: Subject) => s.id === subjectId);
         return subj ? subj.name : `${pId}限`;
+    };
+
+    // Check if a period has an override
+    const hasOverride = (pId: number) => {
+        const overrideKey = `${date}-${pId}`;
+        return !!settings.timetableOverrides?.[overrideKey];
+    };
+
+    // Long press handlers for override
+    const handlePeriodLongPressStart = (pId: number) => {
+        if (pId === 0) return; // HR cannot be overridden
+        longPressTimerRef.current = setTimeout(() => {
+            setOverrideDialogPeriod(pId);
+        }, 600);
+    };
+
+    const handlePeriodLongPressEnd = () => {
+        if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
     };
 
     return (
@@ -202,6 +229,7 @@ export default function AttendancePage() {
                 <div className="flex overflow-x-auto gap-2 pb-1 px-1 scrollbar-hide">
                     {PERIODS.map((p) => {
                         const subjectName = getSubjectName(p.id);
+                        const isOverridden = hasOverride(p.id);
                         return (
                             <button
                                 key={p.id}
@@ -212,15 +240,22 @@ export default function AttendancePage() {
                                         window.scrollTo({ top: 0, behavior: 'smooth' });
                                     }
                                 }}
+                                onMouseDown={() => handlePeriodLongPressStart(p.id)}
+                                onMouseUp={handlePeriodLongPressEnd}
+                                onMouseLeave={handlePeriodLongPressEnd}
+                                onTouchStart={() => handlePeriodLongPressStart(p.id)}
+                                onTouchEnd={handlePeriodLongPressEnd}
                                 className={cn(
                                     "flex-1 min-w-[80px] py-2 px-2 rounded-lg text-sm font-bold transition-all border-2 flex flex-col items-center justify-center gap-1",
                                     period === p.id
                                         ? "bg-slate-900 text-white border-slate-900 shadow-md transform -translate-y-[1px]"
-                                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400"
+                                        : isOverridden
+                                            ? "bg-amber-50 text-amber-800 border-amber-400 hover:bg-amber-100"
+                                            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400"
                                 )}
                             >
                                 <span>{p.label}</span>
-                                <span className={cn("text-[10px] font-normal truncate max-w-full px-1 rounded", period === p.id ? "bg-white/20" : "bg-slate-100")}>
+                                <span className={cn("text-[10px] font-normal truncate max-w-full px-1 rounded", period === p.id ? "bg-white/20" : isOverridden ? "bg-amber-200/50" : "bg-slate-100")}>
                                     {isHoliday ? '-' : subjectName}
                                 </span>
                             </button>
@@ -427,6 +462,64 @@ export default function AttendancePage() {
                     <AlertCircle className="h-6 w-6" />
                     <div className="text-sm font-bold">
                         注意: 今日は「休日」です。
+                    </div>
+                </div>
+            )}
+
+            {/* Override Dialog */}
+            {overrideDialogPeriod !== null && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setOverrideDialogPeriod(null)}>
+                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm space-y-4 animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <Zap className="h-5 w-5 text-amber-500" />
+                                {overrideDialogPeriod}限を差し替え
+                            </h3>
+                            <button onClick={() => setOverrideDialogPeriod(null)} className="p-1 rounded-full hover:bg-slate-100">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                            {format(parseISO(date), 'M月d日(EEE)', { locale: ja })}の{overrideDialogPeriod}限の教科を臨時変更します
+                        </p>
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                            {subjects.map(subj => {
+                                const overrideKey = `${date}-${overrideDialogPeriod}`;
+                                const isCurrentOverride = settings.timetableOverrides?.[overrideKey] === subj.id;
+                                return (
+                                    <button
+                                        key={subj.id}
+                                        onClick={() => {
+                                            setTimetableOverride(date, overrideDialogPeriod!, subj.id);
+                                            setOverrideDialogPeriod(null);
+                                        }}
+                                        className={cn(
+                                            "w-full text-left p-3 rounded-lg border-2 transition-all flex items-center justify-between",
+                                            isCurrentOverride
+                                                ? "border-amber-400 bg-amber-50 text-amber-800"
+                                                : "border-slate-200 hover:border-slate-400 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        <span className="font-medium">{subj.name}</span>
+                                        {isCurrentOverride && <Zap className="h-4 w-4 text-amber-500" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {hasOverride(overrideDialogPeriod) && (
+                            <button
+                                onClick={() => {
+                                    setTimetableOverride(date, overrideDialogPeriod!, null);
+                                    setOverrideDialogPeriod(null);
+                                }}
+                                className="w-full p-2 rounded-lg border-2 border-red-200 text-red-600 text-sm font-bold hover:bg-red-50 transition-all"
+                            >
+                                差し替えを解除（通常時間割に戻す）
+                            </button>
+                        )}
+                        <p className="text-[10px] text-slate-400 text-center">
+                            ※ 時限ボタンを長押しでこの画面を開けます
+                        </p>
                     </div>
                 </div>
             )}

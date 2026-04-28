@@ -102,7 +102,9 @@ export default function ReportPage() {
 
             Array.from({ length: periodCount }, (_, i) => i + 1).forEach(period => {
                 const key = `${dayStr}-${period}`;
-                const subjectId = timetable?.[key];
+                // Check override first, then fall back to regular timetable
+                const overrideKey = `${dStr}-${period}`;
+                const subjectId = settings.timetableOverrides?.[overrideKey] || timetable?.[key];
 
                 // Only count this slot if timetable has a subject set
                 if (subjectId) {

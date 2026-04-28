@@ -47,6 +47,9 @@ export interface AppSettings {
       second: Record<string, string>;
     };
   };
+  // Temporary timetable overrides for specific dates
+  // key: "yyyy-MM-dd-period" (e.g. "2026-04-28-2"), value: subjectId
+  timetableOverrides?: Record<string, string>;
 }
 
 export interface AppState {
@@ -76,6 +79,8 @@ export interface AppState {
 
   generateCalendar: (start: string, end: string) => void;
   toggleHoliday: (date: string) => void;
+
+  setTimetableOverride: (date: string, period: number, subjectId: string | null) => void;
 
   exportData: () => string;
   importData: (code: string) => boolean;
