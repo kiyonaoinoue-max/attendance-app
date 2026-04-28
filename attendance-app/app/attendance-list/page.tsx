@@ -188,7 +188,7 @@ export default function AttendanceListPage() {
             {/* Matrix Table Container */}
             <Card className="overflow-hidden border-slate-300 shadow-md">
                 <div className="overflow-x-auto">
-                    <div className="inline-block min-w-full align-middle" style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left', width: `${100 / zoomLevel}%` }}>
+                    <div className="inline-block min-w-full align-middle" style={{ zoom: zoomLevel }}>
                         <table className="min-w-full border-collapse border-spacing-0">
                             <thead>
                                 <tr>
