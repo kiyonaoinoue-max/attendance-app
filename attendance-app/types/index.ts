@@ -25,6 +25,7 @@ export interface AttendanceRecord {
 export interface CalendarDay {
   date: string; // YYYY-MM-DD
   isHoliday: boolean;
+  holidayName?: string; // 祝日名（例: 昭和の日）
   overrideNote?: string; // 休講理由など
 }
 
@@ -78,6 +79,7 @@ export interface AppState {
   updateSettings: (settings: Partial<AppSettings>) => void;
 
   generateCalendar: (start: string, end: string) => void;
+  applyNationalHolidays: () => Promise<void>;
   toggleHoliday: (date: string) => void;
 
   setTimetableOverride: (date: string, period: number, subjectId: string | null) => void;

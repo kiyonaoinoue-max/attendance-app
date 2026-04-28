@@ -18,7 +18,7 @@ import { Crown, Key, ShieldCheck, ShieldAlert } from 'lucide-react'; // Added ic
 import { cn } from '@/lib/utils'; // Added cn
 
 export default function SettingsPage() {
-    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, exportData, importData, setSyncState, syncCode: globalSyncCode, syncExpiresAt, lastSyncTime, setLastSyncTime, subjects, getLicenseStatus, activateLicense, licenseExpiry } = useStore();
+    const { settings, calendar, updateSettings, generateCalendar, toggleHoliday, applyNationalHolidays, exportData, importData, setSyncState, syncCode: globalSyncCode, syncExpiresAt, lastSyncTime, setLastSyncTime, subjects, getLicenseStatus, activateLicense, licenseExpiry } = useStore();
     const [mounted, setMounted] = useState(false);
     const [viewDate, setViewDate] = useState(new Date());
     const [syncCode, setSyncCode] = useState('');
@@ -26,6 +26,7 @@ export default function SettingsPage() {
     const [cloudExpiresAt, setCloudExpiresAt] = useState<number | null>(null);
     const [importCloudCode, setImportCloudCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isApplyingHolidays, setIsApplyingHolidays] = useState(false);
 
     const [activationKey, setActivationKey] = useState('');
     const licenseStatus = getLicenseStatus();
@@ -236,7 +237,7 @@ export default function SettingsPage() {
                         カレンダーを再生成・初期化
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                        ※ 土日を休日として自動判定します。
+                        ※ 土日・祝日を休日として自動判定します。
                     </p>
                 </CardContent>
             </Card>
@@ -245,6 +246,23 @@ export default function SettingsPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>カレンダー確認・休日設定</CardTitle>
                     <div className="flex items-center space-x-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isApplyingHolidays || calendar.length === 0}
+                            className="text-xs border-orange-300 text-orange-700 hover:bg-orange-50"
+                            onClick={async () => {
+                                setIsApplyingHolidays(true);
+                                try {
+                                    await applyNationalHolidays();
+                                    alert('祝日を適用しました！');
+                                } finally {
+                                    setIsApplyingHolidays(false);
+                                }
+                            }}
+                        >
+                            {isApplyingHolidays ? '取得中...' : '🎌 祝日を適用'}
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleMonthChange(-1)}>
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
@@ -294,13 +312,18 @@ export default function SettingsPage() {
                                             key={day.date}
                                             onClick={() => toggleHoliday(day.date)}
                                             className={`
-                        p-2 rounded hover:bg-slate-100 flex flex-col items-center justify-center min-h-[40px]
+                        p-1 rounded hover:bg-slate-100 flex flex-col items-center justify-center min-h-[48px]
                         ${isHoliday ? 'bg-red-50 text-red-600' : ''}
+                        ${day.holidayName ? 'ring-1 ring-red-200' : ''}
                         ${format(new Date(), 'yyyy-MM-dd') === day.date ? 'ring-2 ring-blue-500' : ''}
                       `}
                                         >
                                             <span>{dateObj.getDate()}</span>
-                                            {isHoliday && <span className="text-[10px]">休</span>}
+                                            {day.holidayName ? (
+                                                <span className="text-[8px] leading-tight text-red-500 font-bold truncate max-w-[40px]">{day.holidayName}</span>
+                                            ) : isHoliday ? (
+                                                <span className="text-[10px]">休</span>
+                                            ) : null}
                                         </button>
                                     );
                                 });

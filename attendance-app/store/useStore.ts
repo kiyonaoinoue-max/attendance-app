@@ -160,16 +160,62 @@ export const useStore = create<AppState>()(
                 settings: { ...state.settings, ...settings }
             })),
 
-            generateCalendar: (start, end) => {
+            generateCalendar: async (start, end) => {
                 const dates = eachDayOfInterval({ start: new Date(start), end: new Date(end) });
-                const calendar: CalendarDay[] = dates.map(d => ({
-                    date: format(d, 'yyyy-MM-dd'),
-                    isHoliday: isSaturday(d) || isSunday(d)
-                }));
+
+                // 祝日APIから日本の祝日を取得
+                let holidays: Record<string, string> = {};
+                try {
+                    const res = await fetch('https://holidays-jp.github.io/api/v1/date.json');
+                    if (res.ok) {
+                        holidays = await res.json();
+                    }
+                } catch (e) {
+                    console.warn('祝日APIの取得に失敗しました。土日のみでカレンダーを生成します。', e);
+                }
+
+                const calendar: CalendarDay[] = dates.map(d => {
+                    const dateStr = format(d, 'yyyy-MM-dd');
+                    const holidayName = holidays[dateStr] || undefined;
+                    return {
+                        date: dateStr,
+                        isHoliday: isSaturday(d) || isSunday(d) || !!holidayName,
+                        holidayName,
+                    };
+                });
                 set({ calendar });
             },
 
             setSelectedGrade: (grade) => set({ selectedGrade: grade }),
+
+            applyNationalHolidays: async () => {
+                const state = get();
+                if (state.calendar.length === 0) return;
+
+                let holidays: Record<string, string> = {};
+                try {
+                    const res = await fetch('https://holidays-jp.github.io/api/v1/date.json');
+                    if (res.ok) {
+                        holidays = await res.json();
+                    } else {
+                        throw new Error('API error');
+                    }
+                } catch (e) {
+                    console.error('祝日APIの取得に失敗しました。', e);
+                    alert('祝日データの取得に失敗しました。インターネット接続を確認してください。');
+                    return;
+                }
+
+                const updatedCalendar = state.calendar.map(day => {
+                    const holidayName = holidays[day.date] || undefined;
+                    if (holidayName) {
+                        return { ...day, isHoliday: true, holidayName };
+                    }
+                    // 祝日でない場合、以前の祝日名をクリア（手動設定の休日はそのまま維持）
+                    return { ...day, holidayName: undefined };
+                });
+                set({ calendar: updatedCalendar });
+            },
 
             toggleHoliday: (date) => set((state) => ({
                 calendar: state.calendar.map(c =>
