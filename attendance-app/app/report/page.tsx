@@ -182,7 +182,7 @@ export default function ReportPage() {
                             <tr key={student.id} className="border-t hover:bg-slate-50">
                                 <td className="border p-2 font-medium">{student.studentNumber}</td>
                                 <td className="border p-2">{student.name}</td>
-                                <td className="border p-2 font-bold">
+                                <td className={cn("border p-2 font-bold", parseFloat(stat.rate) >= 85 ? 'text-green-600' : parseFloat(stat.rate) >= 80 ? 'text-yellow-600' : 'text-red-600')}>
                                     {stat.rate}%
                                     <span className="text-xs text-muted-foreground block">({stat.present}/{stat.total})</span>
                                     <span className="text-[10px] text-slate-400 block" title={stat.daysList}>{stat.daysCount}日間</span>
@@ -312,14 +312,24 @@ export default function ReportPage() {
                             return (
                                 <tr key={student.id} className="border-t hover:bg-slate-50">
                                     <td className="border p-2 font-medium sticky left-0 bg-white z-10">{student.name}</td>
-                                    {monthlyRates.map((rate, i) => (
-                                        <td key={i} className="border p-2 text-center text-xs">
-                                            {rate === '-' ? <span className="text-slate-300">-</span> : `${rate}%`}
-                                        </td>
-                                    ))}
-                                    <td className="border p-2 text-center font-bold bg-slate-50">
-                                        {yearlyRate !== '-' ? `${yearlyRate}%` : '-'}
-                                    </td>
+                                    {monthlyRates.map((rate, i) => {
+                                        const rateNum = rate === '-' ? -1 : parseFloat(rate as string);
+                                        const color = rateNum < 0 ? '' : rateNum >= 85 ? 'text-green-600' : rateNum >= 80 ? 'text-yellow-600' : 'text-red-600';
+                                        return (
+                                            <td key={i} className={cn("border p-2 text-center text-xs", color)}>
+                                                {rate === '-' ? <span className="text-slate-300">-</span> : `${rate}%`}
+                                            </td>
+                                        );
+                                    })}
+                                    {(() => {
+                                        const yrNum = yearlyRate === '-' ? -1 : parseFloat(yearlyRate);
+                                        const yrColor = yrNum < 0 ? '' : yrNum >= 85 ? 'text-green-600' : yrNum >= 80 ? 'text-yellow-600' : 'text-red-600';
+                                        return (
+                                            <td className={cn("border p-2 text-center font-bold bg-slate-50", yrColor)}>
+                                                {yearlyRate !== '-' ? `${yearlyRate}%` : '-'}
+                                            </td>
+                                        );
+                                    })()}
                                 </tr>
                             );
                         })}

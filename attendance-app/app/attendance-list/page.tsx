@@ -303,12 +303,15 @@ export default function AttendanceListPage() {
                                         {/* Summary Cell */}
                                         {(() => {
                                             const summary = calcSummary(student.id);
+                                            const rateNum = parseFloat(summary.rate);
+                                            const rateColor = rateNum >= 85 ? 'text-green-600' : rateNum >= 80 ? 'text-yellow-600' : 'text-red-600';
+                                            const subColor = rateNum >= 85 ? 'text-green-500' : rateNum >= 80 ? 'text-yellow-500' : 'text-red-500';
                                             return (
                                                 <td className="sticky right-0 z-10 bg-blue-50 border-b border-l-2 border-slate-300 px-2 py-1 text-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
-                                                    <div className="text-sm font-bold text-blue-700">
+                                                    <div className={cn("text-sm font-bold", rateColor)}>
                                                         {summary.rate}%
                                                     </div>
-                                                    <div className="text-[10px] text-blue-500">
+                                                    <div className={cn("text-[10px]", subColor)}>
                                                         {summary.present}/{summary.total}
                                                     </div>
                                                 </td>
