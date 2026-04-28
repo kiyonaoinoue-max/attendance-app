@@ -548,6 +548,126 @@ export default function SettingsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Manual / Help Section */}
+            <Card className="border-slate-300 bg-white">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-slate-800">
+                        📖 操作マニュアル
+                    </CardTitle>
+                    <CardDescription>
+                        アプリの使い方と便利な機能をまとめています
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {/* 出席入力 */}
+                    <div className="space-y-3">
+                        <h3 className="font-bold text-base text-slate-800 border-b pb-1">📋 出席入力</h3>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <div className="bg-slate-50 p-3 rounded-lg space-y-2">
+                                <p className="font-medium text-slate-700">基本操作</p>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    <li>日付と時限を選択して、学生カードの横にあるボタン（出席・欠席・遅刻・早退）を押します</li>
+                                    <li>ボタンを押すと自動的に次の学生に移動します</li>
+                                    <li>「未入力に戻す」ボタンで記録を取り消せます</li>
+                                    <li>「取消」ボタンで直前の操作をやり直せます</li>
+                                </ul>
+                            </div>
+                            <div className="bg-slate-50 p-3 rounded-lg space-y-2">
+                                <p className="font-medium text-slate-700">学生カードの見方</p>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    <li>各学生の下に5つのバー（HR・1〜4限）が表示されます</li>
+                                    <li><span className="inline-block w-3 h-3 bg-green-400 rounded mr-1"></span>緑 = 出席、<span className="inline-block w-3 h-3 bg-red-500 rounded mr-1"></span>赤 = 欠席、<span className="inline-block w-3 h-3 bg-yellow-400 rounded mr-1"></span>黄 = 遅刻、<span className="inline-block w-3 h-3 bg-orange-400 rounded mr-1"></span>橙 = 早退</li>
+                                    <li>バーをタップすると、その時限に直接切り替わります</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 臨時差し替え */}
+                    <div className="space-y-3">
+                        <h3 className="font-bold text-base text-slate-800 border-b pb-1">⚡ 臨時時間割差し替え</h3>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 space-y-2">
+                                <p className="font-medium text-amber-800">急な授業変更があった場合の対処方法</p>
+                                <ol className="list-decimal pl-5 space-y-1">
+                                    <li>出席入力ページで、変更したい時限ボタン（1限〜4限）を <strong>長押し（約0.6秒）</strong></li>
+                                    <li>差し替えダイアログが開くので、変更先の教科を選択</li>
+                                    <li>ボタンが琥珀色に変わり、教科名の前に⚡マークが付きます</li>
+                                    <li>差し替えは集計レポートと月間出席一覧にも自動反映されます</li>
+                                </ol>
+                                <p className="text-xs text-amber-600 mt-2">
+                                    ※ 元に戻す場合は、再度長押しして「差し替えを解除」を押してください<br />
+                                    ※ HRは差し替え対象外です
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 月間出席一覧 */}
+                    <div className="space-y-3">
+                        <h3 className="font-bold text-base text-slate-800 border-b pb-1">📊 月間出席一覧・集計</h3>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <div className="bg-slate-50 p-3 rounded-lg space-y-2">
+                                <ul className="list-disc pl-5 space-y-1">
+                                    <li>月間出席一覧は紙の出席簿と同じ形式です</li>
+                                    <li>右端の「ー」「＋」ボタンで縮小・拡大して広範囲を確認できます</li>
+                                    <li>グレーアウトされたコマは時間割に教科が未設定のため、集計対象外です</li>
+                                    <li>右端の青い列に出席率のサマリーが表示されます（集計レポートと同じ計算ロジック）</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* カレンダー・休講設定 */}
+                    <div className="space-y-3">
+                        <h3 className="font-bold text-base text-slate-800 border-b pb-1">🗓️ カレンダー・休講設定</h3>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <div className="bg-slate-50 p-3 rounded-lg space-y-2">
+                                <ul className="list-disc pl-5 space-y-1">
+                                    <li>カレンダーの日付をタップすると休日/通常日を切り替えられます</li>
+                                    <li>休講に設定した日は、出席記録は残りますが<strong>集計の分母からは除外</strong>されます</li>
+                                    <li>オリエンテーション等の特殊な日は「休講」に設定すると、出席記録を残しつつ通常授業の集計から外せます</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 年度変更 */}
+                    <div className="space-y-3">
+                        <h3 className="font-bold text-base text-slate-800 border-b pb-1">🔄 年度が変わったら</h3>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 space-y-2">
+                                <p className="font-medium text-blue-800">新年度への切り替え手順</p>
+                                <ol className="list-decimal pl-5 space-y-1">
+                                    <li>設定ページの「学期設定」で前期・後期の日付を新年度の日程に更新</li>
+                                    <li>「カレンダーを再生成・初期化」ボタンで新しいカレンダーを作成</li>
+                                    <li>必要に応じて祝日や休講日を手動で設定</li>
+                                    <li>教科管理ページで時間割に変更があれば更新</li>
+                                </ol>
+                                <p className="text-xs text-blue-600 mt-2">
+                                    ※ 過去の出席記録は日付ベースで保存されているため、設定を更新しても消えません<br />
+                                    ※ 集計レポートは選択した月・期間に応じて自動的に正しい期間で計算されます
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* データ同期 */}
+                    <div className="space-y-3">
+                        <h3 className="font-bold text-base text-slate-800 border-b pb-1">☁️ データの同期・バックアップ</h3>
+                        <div className="space-y-2 text-sm text-slate-600">
+                            <div className="bg-slate-50 p-3 rounded-lg space-y-2">
+                                <ul className="list-disc pl-5 space-y-1">
+                                    <li><strong>かんたんクラウド同期</strong>：「合言葉を発行」→ 6桁のコードを別端末で入力するだけ（5分間有効）</li>
+                                    <li><strong>オフラインバックアップ</strong>：エクスポートコードをコピーして暗号化されたテキストで保存できます</li>
+                                    <li>定期的にバックアップを取ることをおすすめします</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </div >
     );
 }
