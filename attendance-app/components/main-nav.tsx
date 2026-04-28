@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Users, BookOpen, CalendarCheck, FileSpreadsheet, Settings, Home } from 'lucide-react';
+import { Users, BookOpen, CalendarCheck, FileSpreadsheet, Settings, Home, HelpCircle } from 'lucide-react';
 
 const navItems = [
     { href: '/', label: 'ホーム', icon: Home },
@@ -11,6 +11,7 @@ const navItems = [
     { href: '/subjects', label: '教科管理', icon: BookOpen },
     { href: '/report', label: '集計・出力', icon: FileSpreadsheet },
     { href: '/settings', label: '設定', icon: Settings },
+    { href: '/manual', label: '操作マニュアル', icon: HelpCircle },
 ];
 
 export function MainNav() {
