@@ -601,6 +601,18 @@ export default function SettingsPage() {
                                     ※ HRは差し替え対象外です
                                 </p>
                             </div>
+                            <div className="bg-green-50 p-3 rounded-lg border border-green-200 space-y-2 mt-2">
+                                <p className="font-medium text-green-800">💡 便利な使い方</p>
+                                <p className="text-green-700">
+                                    あらかじめ教科管理で<strong>「LHR（ロングホームルーム）」や「特別活動」など必須時間0の教科</strong>を登録しておくと、
+                                    急な時間割変更にも柔軟に対応できます。
+                                </p>
+                                <ul className="list-disc pl-5 space-y-1 text-green-700">
+                                    <li>例：1限が急遽LHRに変更 → 長押しで「LHR」に差し替え</li>
+                                    <li>出席記録は残しつつ、必須時間0なので教科別の必須時間集計に影響しません</li>
+                                    <li>自習、学校行事、避難訓練なども同様に対応可能です</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 
