@@ -309,7 +309,7 @@ export default function LandingPage() {
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-start">
                         {/* Free Plan */}
                         <Card className="border border-slate-200 shadow-xl bg-white/80 backdrop-blur-sm relative">
                             <CardHeader className="text-center pb-2">
@@ -347,17 +347,14 @@ export default function LandingPage() {
                             </CardFooter>
                         </Card>
 
-                        {/* Pro Plan */}
-                        <Card className="border-2 border-indigo-600 shadow-2xl bg-white relative transform md:-translate-y-4">
-                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
-                                おすすめ
-                            </div>
+                        {/* Monthly Plan */}
+                        <Card className="border border-slate-200 shadow-xl bg-white/80 backdrop-blur-sm relative">
                             <CardHeader className="text-center pb-2">
-                                <CardTitle className="text-2xl font-bold text-slate-900">Pro</CardTitle>
-                                <CardDescription>クラス全体の管理に</CardDescription>
+                                <CardTitle className="text-2xl font-bold text-slate-900">Monthly</CardTitle>
+                                <CardDescription>まずは1ヶ月お試しに</CardDescription>
                                 <div className="mt-6 mb-2">
-                                    <span className="text-5xl font-bold text-slate-900">¥1,200</span>
-                                    <span className="text-slate-500">/年</span>
+                                    <span className="text-5xl font-bold text-slate-900">¥200</span>
+                                    <span className="text-slate-500">/月</span>
                                 </div>
                             </CardHeader>
                             <CardContent>
@@ -381,8 +378,55 @@ export default function LandingPage() {
                                 </ul>
                             </CardContent>
                             <CardFooter className="flex flex-col gap-3">
+                                <Button asChild className="w-full h-12 text-lg bg-slate-900 hover:bg-slate-800 transition-all">
+                                    <Link href="https://craftmanwork.official.ec" target="_blank" rel="noopener noreferrer">
+                                        <Lock className="w-4 h-4 mr-2" />
+                                        ライセンスを購入する
+                                    </Link>
+                                </Button>
+                                <p className="text-xs text-center text-slate-400">
+                                    外部サイト(BASE)へ移動します
+                                </p>
+                            </CardFooter>
+                        </Card>
+
+                        {/* Pro Plan (Annual) */}
+                        <Card className="border-2 border-indigo-600 shadow-2xl bg-white relative transform md:-translate-y-4">
+                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+                                おすすめ
+                            </div>
+                            <CardHeader className="text-center pb-2">
+                                <CardTitle className="text-2xl font-bold text-slate-900">Pro</CardTitle>
+                                <CardDescription>クラス全体の管理に（年間プラン）</CardDescription>
+                                <div className="mt-6 mb-2">
+                                    <span className="text-5xl font-bold text-slate-900">¥2,000</span>
+                                    <span className="text-slate-500">/年</span>
+                                </div>
+                                <p className="text-sm text-green-600 font-medium">月額より約17%おトク</p>
+                            </CardHeader>
+                            <CardContent>
+                                <ul className="space-y-4 pt-6">
+                                    <li className="flex items-center font-bold text-slate-900">
+                                        <Check className="h-5 w-5 text-green-500 mr-2 stroke-[3px]" />
+                                        学生登録数 無制限
+                                    </li>
+                                    <li className="flex items-center text-slate-600">
+                                        <Check className="h-5 w-5 text-indigo-600 mr-2" />
+                                        全ての機能を利用可能
+                                    </li>
+                                    <li className="flex items-center text-slate-600">
+                                        <Check className="h-5 w-5 text-indigo-600 mr-2" />
+                                        優先サポート
+                                    </li>
+                                    <li className="flex items-center text-slate-600">
+                                        <Check className="h-5 w-5 text-indigo-600 mr-2" />
+                                        今後の新機能をいち早く体験
+                                    </li>
+                                </ul>
+                            </CardContent>
+                            <CardFooter className="flex flex-col gap-3">
                                 <Button asChild className="w-full h-12 text-lg bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-200">
-                                    <Link href="https://example.com/base-shop" target="_blank" rel="noopener noreferrer">
+                                    <Link href="https://craftmanwork.official.ec" target="_blank" rel="noopener noreferrer">
                                         <Lock className="w-4 h-4 mr-2" />
                                         ライセンスを購入する
                                     </Link>
