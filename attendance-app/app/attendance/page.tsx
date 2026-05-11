@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore } from '@/store/useStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { format, parseISO, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, TimerOff, AlertCircle, Minus, Plus, RotateCcw, Zap, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, TimerOff, AlertCircle, Minus, Plus, RotateCcw, Zap, X, Users } from 'lucide-react';
 import { Student, AttendanceRecord, CalendarDay, Subject } from '@/types'; // Added imports
 // ... imports
 import { AttendanceStatus } from '@/types';
@@ -49,9 +49,58 @@ export default function AttendancePage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [lastAction, setLastAction] = useState<LastAction | null>(null);
 
+    // Bulk attendance (全出席) state
 
     // Filter students by selected Grade
     const filteredStudents: Student[] = students.filter((s: Student) => (s.grade || 1) === selectedGrade);
+
+    const [showBulkConfirm, setShowBulkConfirm] = useState(false);
+    const [bulkAnimatingIds, setBulkAnimatingIds] = useState<Set<string>>(new Set());
+    const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+    const bulkLongPressRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Long press handlers for bulk present
+    const handleBulkLongPressStart = useCallback(() => {
+        bulkLongPressRef.current = setTimeout(() => {
+            setShowBulkConfirm(true);
+        }, 600);
+    }, []);
+
+    const handleBulkLongPressEnd = useCallback(() => {
+        if (bulkLongPressRef.current) {
+            clearTimeout(bulkLongPressRef.current);
+            bulkLongPressRef.current = null;
+        }
+    }, []);
+
+    // Execute bulk present with cascade animation
+    const executeBulkPresent = useCallback(() => {
+        setShowBulkConfirm(false);
+        setIsBulkProcessing(true);
+        const ids = new Set<string>();
+        setBulkAnimatingIds(ids);
+
+        filteredStudents.forEach((student, index) => {
+            setTimeout(() => {
+                toggleAttendance(student.id, date, period, 'present');
+                setBulkAnimatingIds(prev => {
+                    const next = new Set(prev);
+                    next.add(student.id);
+                    return next;
+                });
+
+                // Last student: clear animation after a short delay
+                if (index === filteredStudents.length - 1) {
+                    setTimeout(() => {
+                        setBulkAnimatingIds(new Set());
+                        setIsBulkProcessing(false);
+                    }, 600);
+                }
+            }, index * 60); // 60ms stagger per student
+        });
+    }, [filteredStudents, date, period, toggleAttendance]);
+
+
 
     // Auto-select first student on data load or grade switch
     useEffect(() => {
@@ -284,7 +333,8 @@ export default function AttendancePage() {
                                     onClick={() => setSelectedStudentId(student.id)}
                                     className={cn(
                                         "flex items-center justify-between bg-white rounded-lg border shadow-sm transition-all select-none overflow-hidden cursor-pointer",
-                                        isSelected ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 z-10" : "border-slate-200 hover:border-slate-300"
+                                        isSelected ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 z-10" : "border-slate-200 hover:border-slate-300",
+                                        bulkAnimatingIds.has(student.id) && "!bg-green-50 !border-green-400 ring-2 ring-green-300 ring-offset-1 animate-pulse"
                                     )}
                                     style={{
                                         padding: `${16 * zoomLevel}px`,
@@ -367,12 +417,13 @@ export default function AttendancePage() {
                             {(Object.keys(STATUS_CONFIG) as AttendanceStatus[]).map(s => {
                                 const cfg = STATUS_CONFIG[s];
                                 const Icon = cfg.icon;
+                                const isPresentButton = s === 'present';
                                 return (
                                     <button
                                         key={s}
-                                        disabled={isProcessing}
+                                        disabled={isProcessing || isBulkProcessing}
                                         onClick={() => {
-                                            if (!selectedStudentId || isProcessing) return;
+                                            if (!selectedStudentId || isProcessing || isBulkProcessing) return;
 
                                             // Set processing state to prevent rapid clicks
                                             setIsProcessing(true);
@@ -401,15 +452,26 @@ export default function AttendancePage() {
                                                 setTimeout(() => setIsProcessing(false), 300);
                                             }
                                         }}
+                                        // Long press on present button for bulk attendance
+                                        {...(isPresentButton ? {
+                                            onMouseDown: handleBulkLongPressStart,
+                                            onMouseUp: handleBulkLongPressEnd,
+                                            onMouseLeave: handleBulkLongPressEnd,
+                                            onTouchStart: handleBulkLongPressStart,
+                                            onTouchEnd: handleBulkLongPressEnd,
+                                        } : {})}
                                         className={cn(
-                                            "flex items-center gap-3 p-3 rounded-lg border-2 transition-all",
-                                            isProcessing ? "opacity-50 cursor-not-allowed" : "hover:brightness-95 active:scale-95",
+                                            "flex items-center gap-3 p-3 rounded-lg border-2 transition-all relative",
+                                            (isProcessing || isBulkProcessing) ? "opacity-50 cursor-not-allowed" : "hover:brightness-95 active:scale-95",
                                             cfg.color,
                                             "bg-opacity-20 border-opacity-50"
                                         )}
                                     >
                                         <Icon className="h-6 w-6" />
                                         <span className="font-bold">{cfg.label}</span>
+                                        {isPresentButton && (
+                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-green-500 opacity-60 font-medium">長押し:全員</span>
+                                        )}
                                     </button>
                                 );
                             })}
@@ -449,8 +511,8 @@ export default function AttendancePage() {
                             </button>
                         </div>
 
-                        <div className="text-xs text-center text-slate-400 mt-4">
-                            ボタンを押すと自動で次の人に移動します
+                        <div className="text-xs text-center text-slate-400 mt-4 space-y-1">
+                            <p>ボタンを押すと自動で次の人に移動します</p>
                         </div>
                     </div>
                 </div>
@@ -519,6 +581,50 @@ export default function AttendancePage() {
                         )}
                         <p className="text-[10px] text-slate-400 text-center">
                             ※ 時限ボタンを長押しでこの画面を開けます
+                        </p>
+                    </div>
+                </div>
+            )}
+            {/* Bulk Present Confirmation Dialog */}
+            {showBulkConfirm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowBulkConfirm(false)}>
+                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm space-y-5 animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <div className="p-2 bg-green-100 rounded-lg">
+                                    <Users className="h-5 w-5 text-green-600" />
+                                </div>
+                                全員出席
+                            </h3>
+                            <button onClick={() => setShowBulkConfirm(false)} className="p-1 rounded-full hover:bg-slate-100">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                            <p className="text-green-800 font-bold text-lg">
+                                {PERIODS.find(p => p.id === period)?.label || `${period}限`}
+                            </p>
+                            <p className="text-green-600 text-sm mt-1">
+                                {filteredStudents.length}名全員を「出席」にします
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowBulkConfirm(false)}
+                                className="flex-1 p-3 rounded-lg border-2 border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all active:scale-95"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={executeBulkPresent}
+                                className="flex-1 p-3 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 transition-all active:scale-95 shadow-lg shadow-green-200 flex items-center justify-center gap-2"
+                            >
+                                <CheckCircle2 className="h-5 w-5" />
+                                全員出席
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 text-center">
+                            ※ 出席ボタンを長押しでこの画面を開けます
                         </p>
                     </div>
                 </div>
