@@ -109,6 +109,7 @@ export default function ReportPage() {
                 // Only count this slot if timetable has a subject set
                 if (subjectId) {
                     totalSlots++; // Count as scheduled slot
+                    subjectHeldHours[subjectId] = (subjectHeldHours[subjectId] || 0) + hourPerPeriod;
 
                     const record = attendanceRecords.find(r => r.studentId === studentId && r.date === dStr && r.period === period);
 
@@ -152,7 +153,7 @@ export default function ReportPage() {
         };
     };
 
-    const renderTable = (start: Date, end: Date) => (
+    const renderTable = (start: Date, end: Date, options?: { cumulativeStart?: Date; useAnnualRequired?: boolean }) => (
         <div className="overflow-x-auto">
             <table className="w-full text-sm text-left border-collapse border border-slate-200">
                 <thead className="bg-slate-100 text-slate-700">
@@ -178,11 +179,12 @@ export default function ReportPage() {
                         </tr>
                     ) : filteredStudents.map(student => {
                         const stat = calcStats(student.id, start, end);
+                        const cumStat = options?.cumulativeStart ? calcStats(student.id, options.cumulativeStart, end) : null;
                         return (
                             <tr key={student.id} className="border-t hover:bg-slate-50">
                                 <td className="border p-2 font-medium">{student.studentNumber}</td>
                                 <td className="border p-2">{student.name}</td>
-                                <td className={cn("border p-2 font-bold", parseFloat(stat.rate) >= 85 ? 'text-green-600' : parseFloat(stat.rate) >= 80 ? 'text-yellow-600' : 'text-red-600')}>
+                                <td className={cn("border p-2 font-bold", parseFloat(stat.rate) >= 90 ? 'text-green-600' : parseFloat(stat.rate) >= 80 ? 'text-yellow-600' : 'text-red-600')}>
                                     {stat.rate}%
                                     <span className="text-xs text-muted-foreground block">({stat.present}/{stat.total})</span>
                                     <span className="text-[10px] text-slate-400 block" title={stat.daysList}>{stat.daysCount}日間</span>
@@ -190,12 +192,36 @@ export default function ReportPage() {
                                 <td className="border p-2">{stat.late}</td>
                                 <td className="border p-2">{stat.early}</td>
                                 {subjects.map(s => {
-                                    const current = stat.subjectHours[s.id] || 0;
+                                    const monthHours = stat.subjectHours[s.id] || 0;
+                                    if (options?.useAnnualRequired) {
+                                        return (
+                                            <td key={s.id} className="border p-2">
+                                                <div className="flex justify-between">
+                                                    <span>{monthHours.toFixed(1)}h</span>
+                                                    <span className="text-slate-400">/ {s.requiredHours}h</span>
+                                                </div>
+                                            </td>
+                                        );
+                                    }
+                                    if (cumStat) {
+                                        const cumHours = cumStat.subjectHours[s.id] || 0;
+                                        const cumHeld = cumStat.subjectHeldHours[s.id] || 0;
+                                        return (
+                                            <td key={s.id} className="border p-2">
+                                                <div className="flex justify-between">
+                                                    <span className="font-medium">{cumHours.toFixed(1)}h</span>
+                                                    <span className="text-slate-400">/ {cumHeld.toFixed(1)}h</span>
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 mt-0.5">(今月 {monthHours.toFixed(1)}h)</div>
+                                            </td>
+                                        );
+                                    }
+                                    const heldHours = stat.subjectHeldHours[s.id] || 0;
                                     return (
                                         <td key={s.id} className="border p-2">
                                             <div className="flex justify-between">
-                                                <span>{current.toFixed(1)}h</span>
-                                                <span className="text-slate-400">/ {s.requiredHours}h</span>
+                                                <span>{monthHours.toFixed(1)}h</span>
+                                                <span className="text-slate-400">/ {heldHours.toFixed(1)}h</span>
                                             </div>
                                         </td>
                                     );
@@ -223,7 +249,7 @@ export default function ReportPage() {
                 const stat = calcStats(s.id, start, end);
                 data.push([
                     s.studentNumber, s.name, s.className, `${stat.rate}%`, stat.late, stat.early,
-                    ...subjects.map(subj => `${(stat.subjectHours[subj.id] || 0).toFixed(1)} / ${subj.requiredHours}`)
+                    ...subjects.map(subj => `${(stat.subjectHours[subj.id] || 0).toFixed(1)} / ${(stat.subjectHeldHours[subj.id] || 0).toFixed(1)}`)
                 ]);
             });
             const ws = utils.aoa_to_sheet(data);
@@ -314,7 +340,7 @@ export default function ReportPage() {
                                     <td className="border p-2 font-medium sticky left-0 bg-white z-10">{student.name}</td>
                                     {monthlyRates.map((rate, i) => {
                                         const rateNum = rate === '-' ? -1 : parseFloat(rate as string);
-                                        const color = rateNum < 0 ? '' : rateNum >= 85 ? 'text-green-600' : rateNum >= 80 ? 'text-yellow-600' : 'text-red-600';
+                                        const color = rateNum < 0 ? '' : rateNum >= 90 ? 'text-green-600' : rateNum >= 80 ? 'text-yellow-600' : 'text-red-600';
                                         return (
                                             <td key={i} className={cn("border p-2 text-center text-xs", color)}>
                                                 {rate === '-' ? <span className="text-slate-300">-</span> : `${rate}%`}
@@ -323,7 +349,7 @@ export default function ReportPage() {
                                     })}
                                     {(() => {
                                         const yrNum = yearlyRate === '-' ? -1 : parseFloat(yearlyRate);
-                                        const yrColor = yrNum < 0 ? '' : yrNum >= 85 ? 'text-green-600' : yrNum >= 80 ? 'text-yellow-600' : 'text-red-600';
+                                        const yrColor = yrNum < 0 ? '' : yrNum >= 90 ? 'text-green-600' : yrNum >= 80 ? 'text-yellow-600' : 'text-red-600';
                                         return (
                                             <td className={cn("border p-2 text-center font-bold bg-slate-50", yrColor)}>
                                                 {yearlyRate !== '-' ? `${yearlyRate}%` : '-'}
@@ -384,7 +410,7 @@ export default function ReportPage() {
                             <div className="mb-4 text-right">
                                 <input type="month" value={targetMonth} onChange={e => setTargetMonth(e.target.value)} className="border p-1 rounded" />
                             </div>
-                            {renderTable(monthStart, monthEnd)}
+                            {renderTable(monthStart, monthEnd, { cumulativeStart: parseISO(settings.firstTerm?.start || settings.termStartDate || format(new Date(), 'yyyy-MM-dd')) })}
                         </TabsContent>
 
                         <TabsContent value="first">
@@ -423,7 +449,7 @@ export default function ReportPage() {
                                     <div className="mb-2 font-bold text-center">
                                         {settings.firstTerm.start} 〜 {settings.secondTerm.end}
                                     </div>
-                                    {renderTable(parseISO(settings.firstTerm.start), parseISO(settings.secondTerm.end))}
+                                    {renderTable(parseISO(settings.firstTerm.start), parseISO(settings.secondTerm.end), { useAnnualRequired: true })}
                                 </>
                             ) : (
                                 <div className="p-8 text-center text-muted-foreground">
