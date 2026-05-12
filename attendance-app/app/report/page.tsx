@@ -165,7 +165,7 @@ export default function ReportPage() {
                         <th className="border p-2 text-orange-600">早退</th>
                         {subjects.map(s => (
                             <th key={s.id} className="border p-2 min-w-[120px]">
-                                {s.name}<br /><span className="text-xs font-normal">出席/必須</span>
+                                {s.name}<br /><span className="text-xs font-normal">出席/{options?.useAnnualRequired ? '必須' : '実施'}</span>
                             </th>
                         ))}
                     </tr>
