@@ -76,10 +76,12 @@ export default function LandingPage() {
                         <span className="block font-bold text-slate-800 mb-4 text-2xl md:text-3xl leading-snug">
                             「
                             <span className="text-indigo-600 text-3xl md:text-4xl font-extrabold">50人</span>
-                            の出席が、最短
-                            <span className="text-indigo-600 text-3xl md:text-4xl font-extrabold">30秒</span>
-                            で完了」
+                            の出席確認、最短
+                            <span className="text-indigo-600 text-3xl md:text-4xl font-extrabold">5秒</span>
+                            。」
                         </span>
+                        <span className="block text-slate-500 text-base md:text-lg mb-1">一人ひとり、顔を見て確認したい時は30秒。</span>
+                        <span className="block text-slate-500 text-base md:text-lg mb-4">空席をパッと見て欠席を入力なら5秒。</span>
                         複雑な操作は一切不要。毎日のルーチンワークを劇的に効率化します。<br className="hidden md:block" />
                         タブレット一台で、クラス全員の状況を一目で把握。
                     </p>
