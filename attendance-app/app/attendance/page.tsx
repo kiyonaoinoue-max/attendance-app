@@ -100,6 +100,34 @@ export default function AttendancePage() {
         });
     }, [filteredStudents, date, period, toggleAttendance]);
 
+    // Full-day absent (1日欠席) state
+    const [showDayAbsentConfirm, setShowDayAbsentConfirm] = useState(false);
+    const absentLongPressRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleAbsentLongPressStart = useCallback(() => {
+        if (!selectedStudentId) return;
+        absentLongPressRef.current = setTimeout(() => {
+            setShowDayAbsentConfirm(true);
+        }, 600);
+    }, [selectedStudentId]);
+
+    const handleAbsentLongPressEnd = useCallback(() => {
+        if (absentLongPressRef.current) {
+            clearTimeout(absentLongPressRef.current);
+            absentLongPressRef.current = null;
+        }
+    }, []);
+
+    const executeDayAbsent = useCallback(() => {
+        if (!selectedStudentId) return;
+        setShowDayAbsentConfirm(false);
+        const periodCount = settings.periodCount ?? 4;
+        // Mark all periods (0=HR, 1~periodCount) as absent
+        for (let p = 0; p <= periodCount; p++) {
+            toggleAttendance(selectedStudentId, date, p, 'absent');
+        }
+    }, [selectedStudentId, date, settings.periodCount, toggleAttendance]);
+
 
 
     // Auto-select first student on data load or grade switch
@@ -418,6 +446,7 @@ export default function AttendancePage() {
                                 const cfg = STATUS_CONFIG[s];
                                 const Icon = cfg.icon;
                                 const isPresentButton = s === 'present';
+                                const isAbsentButton = s === 'absent';
                                 return (
                                     <button
                                         key={s}
@@ -453,12 +482,19 @@ export default function AttendancePage() {
                                             }
                                         }}
                                         // Long press on present button for bulk attendance
+                                        // Long press on absent button for full-day absent
                                         {...(isPresentButton ? {
                                             onMouseDown: handleBulkLongPressStart,
                                             onMouseUp: handleBulkLongPressEnd,
                                             onMouseLeave: handleBulkLongPressEnd,
                                             onTouchStart: handleBulkLongPressStart,
                                             onTouchEnd: handleBulkLongPressEnd,
+                                        } : isAbsentButton ? {
+                                            onMouseDown: handleAbsentLongPressStart,
+                                            onMouseUp: handleAbsentLongPressEnd,
+                                            onMouseLeave: handleAbsentLongPressEnd,
+                                            onTouchStart: handleAbsentLongPressStart,
+                                            onTouchEnd: handleAbsentLongPressEnd,
                                         } : {})}
                                         className={cn(
                                             "flex items-center gap-3 p-3 rounded-lg border-2 transition-all relative",
@@ -471,6 +507,9 @@ export default function AttendancePage() {
                                         <span className="font-bold">{cfg.label}</span>
                                         {isPresentButton && (
                                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-green-500 opacity-60 font-medium">長押し:全員</span>
+                                        )}
+                                        {isAbsentButton && (
+                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-red-500 opacity-60 font-medium">長押し:1日</span>
                                         )}
                                     </button>
                                 );
@@ -625,6 +664,50 @@ export default function AttendancePage() {
                         </div>
                         <p className="text-[10px] text-slate-400 text-center">
                             ※ 出席ボタンを長押しでこの画面を開けます
+                        </p>
+                    </div>
+                </div>
+            )}
+            {/* Full-Day Absent Confirmation Dialog */}
+            {showDayAbsentConfirm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDayAbsentConfirm(false)}>
+                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm space-y-5 animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <div className="p-2 bg-red-100 rounded-lg">
+                                    <XCircle className="h-5 w-5 text-red-600" />
+                                </div>
+                                1日欠席
+                            </h3>
+                            <button onClick={() => setShowDayAbsentConfirm(false)} className="p-1 rounded-full hover:bg-slate-100">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                            <p className="text-red-800 font-bold text-lg">
+                                {selectedStudentId ? students.find(s => s.id === selectedStudentId)?.name : ''}
+                            </p>
+                            <p className="text-red-600 text-sm mt-1">
+                                {format(parseISO(date), 'M月d日(EEE)', { locale: ja })}の全{(settings.periodCount ?? 4) + 1}コマを「欠席」にします
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDayAbsentConfirm(false)}
+                                className="flex-1 p-3 rounded-lg border-2 border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all active:scale-95"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={executeDayAbsent}
+                                className="flex-1 p-3 rounded-lg bg-red-600 text-white font-bold hover:bg-red-700 transition-all active:scale-95 shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                            >
+                                <XCircle className="h-5 w-5" />
+                                1日欠席
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 text-center">
+                            ※ 欠席ボタンを長押しでこの画面を開けます
                         </p>
                     </div>
                 </div>
