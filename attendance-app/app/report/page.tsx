@@ -130,8 +130,28 @@ export default function ReportPage() {
         // Calculate attendance rate
         const attendanceRate = totalSlots > 0 ? ((presentCount / totalSlots) * 100).toFixed(1) : '0.0';
 
-        // Counts for late and early leave
-        const late = attendanceRecords.filter(r => r.studentId === studentId && r.status === 'late' && parseISO(r.date) >= start && parseISO(r.date) <= end).length;
+        // Counts for late (day-based) and early leave
+        // Late: count unique DAYS, not periods
+        const lateDaysSet = new Set<string>();
+        // 1. Days with any manually marked 'late' record
+        attendanceRecords
+            .filter(r => r.studentId === studentId && r.status === 'late' && parseISO(r.date) >= start && parseISO(r.date) <= end)
+            .forEach(r => lateDaysSet.add(r.date));
+        // 2. Auto-detect: HR (period 0) absent/missing but period 1+ attended
+        validDays.forEach(d => {
+            const dStr = format(d, 'yyyy-MM-dd');
+            const hrRecord = attendanceRecords.find(r => r.studentId === studentId && r.date === dStr && r.period === 0);
+            const hrAbsent = !hrRecord || hrRecord.status === 'absent';
+            if (hrAbsent) {
+                const hasLaterAttendance = attendanceRecords.some(r =>
+                    r.studentId === studentId && r.date === dStr && r.period > 0 && r.status !== 'absent'
+                );
+                if (hasLaterAttendance) {
+                    lateDaysSet.add(dStr);
+                }
+            }
+        });
+        const late = lateDaysSet.size;
         const early = attendanceRecords.filter(r => r.studentId === studentId && r.status === 'early_leave' && parseISO(r.date) >= start && parseISO(r.date) <= end).length;
 
         // Round subject hours to 1 decimal place
