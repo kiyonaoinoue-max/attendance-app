@@ -73,12 +73,11 @@ export default function AttendancePage() {
         }
     }, []);
 
-    // Execute bulk present with cascade animation
+    // Execute bulk present with cascade animation + auto-scroll
     const executeBulkPresent = useCallback(() => {
         setShowBulkConfirm(false);
         setIsBulkProcessing(true);
-        const ids = new Set<string>();
-        setBulkAnimatingIds(ids);
+        setBulkAnimatingIds(new Set());
 
         filteredStudents.forEach((student, index) => {
             setTimeout(() => {
@@ -89,14 +88,25 @@ export default function AttendancePage() {
                     return next;
                 });
 
-                // Last student: clear animation after a short delay
+                // Auto-scroll to follow the cascade
+                const el = studentRefs.current[student.id];
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                // Last student: clear animation and scroll to top
                 if (index === filteredStudents.length - 1) {
                     setTimeout(() => {
                         setBulkAnimatingIds(new Set());
                         setIsBulkProcessing(false);
-                    }, 600);
+                        // Scroll back to top
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        if (filteredStudents.length > 0) {
+                            setSelectedStudentId(filteredStudents[0].id);
+                        }
+                    }, 800);
                 }
-            }, index * 60); // 60ms stagger per student
+            }, index * 80); // 80ms stagger for smoother scroll tracking
         });
     }, [filteredStudents, date, period, toggleAttendance]);
 
@@ -362,7 +372,7 @@ export default function AttendancePage() {
                                     className={cn(
                                         "flex items-center justify-between bg-white rounded-lg border shadow-sm transition-all select-none overflow-hidden cursor-pointer",
                                         isSelected ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 z-10" : "border-slate-200 hover:border-slate-300",
-                                        bulkAnimatingIds.has(student.id) && "!bg-green-50 !border-green-400 ring-2 ring-green-300 ring-offset-1 animate-pulse"
+                                        bulkAnimatingIds.has(student.id) && "!bg-gradient-to-r !from-green-100 !to-emerald-50 !border-green-400 ring-2 ring-green-400 ring-offset-1 shadow-lg shadow-green-200/50 scale-[1.02] transition-all duration-300"
                                     )}
                                     style={{
                                         padding: `${16 * zoomLevel}px`,
