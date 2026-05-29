@@ -138,7 +138,38 @@ export default function AttendancePage() {
         }
     }, [selectedStudentId, date, settings.periodCount, toggleAttendance]);
 
+    // Bulk reset (全員未入力) state
+    const [showBulkResetConfirm, setShowBulkResetConfirm] = useState(false);
+    const resetLongPressRef = useRef<NodeJS.Timeout | null>(null);
 
+    const handleResetLongPressStart = useCallback(() => {
+        resetLongPressRef.current = setTimeout(() => {
+            setShowBulkResetConfirm(true);
+        }, 600);
+    }, []);
+
+    const handleResetLongPressEnd = useCallback(() => {
+        if (resetLongPressRef.current) {
+            clearTimeout(resetLongPressRef.current);
+            resetLongPressRef.current = null;
+        }
+    }, []);
+
+    const executeBulkReset = useCallback(() => {
+        setShowBulkResetConfirm(false);
+        setIsBulkProcessing(true);
+        filteredStudents.forEach((student, index) => {
+            setTimeout(() => {
+                toggleAttendance(student.id, date, period, null);
+                if (index === filteredStudents.length - 1) {
+                    setTimeout(() => {
+                        setIsBulkProcessing(false);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 400);
+                }
+            }, index * 30);
+        });
+    }, [filteredStudents, date, period, toggleAttendance]);
 
     // Auto-select first student on data load or grade switch
     useEffect(() => {
@@ -544,19 +575,25 @@ export default function AttendancePage() {
 
                             {/* Reset Button */}
                             <button
-                                disabled={isProcessing}
+                                disabled={isProcessing || isBulkProcessing}
                                 onClick={() => {
-                                    if (!selectedStudentId || isProcessing) return;
+                                    if (!selectedStudentId || isProcessing || isBulkProcessing) return;
                                     toggleAttendance(selectedStudentId, date, period, null);
                                     // No auto-advance for reset
                                 }}
+                                onMouseDown={handleResetLongPressStart}
+                                onMouseUp={handleResetLongPressEnd}
+                                onMouseLeave={handleResetLongPressEnd}
+                                onTouchStart={handleResetLongPressStart}
+                                onTouchEnd={handleResetLongPressEnd}
                                 className={cn(
-                                    "flex items-center gap-3 p-3 rounded-lg border-2 border-slate-200 bg-slate-50 text-slate-500 transition-all mt-2",
-                                    isProcessing ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                                    "flex items-center gap-3 p-3 rounded-lg border-2 border-slate-200 bg-slate-50 text-slate-500 transition-all mt-2 relative",
+                                    (isProcessing || isBulkProcessing) ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-100 hover:text-slate-700 active:scale-95"
                                 )}
                             >
                                 <Minus className="h-6 w-6" />
                                 <span className="font-bold">未入力に戻す</span>
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 opacity-60 font-medium">長押し:全員</span>
                             </button>
                         </div>
 
@@ -718,6 +755,50 @@ export default function AttendancePage() {
                         </div>
                         <p className="text-[10px] text-slate-400 text-center">
                             ※ 欠席ボタンを長押しでこの画面を開けます
+                        </p>
+                    </div>
+                </div>
+            )}
+            {/* Bulk Reset Confirmation Dialog */}
+            {showBulkResetConfirm && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowBulkResetConfirm(false)}>
+                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm space-y-5 animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <div className="p-2 bg-slate-100 rounded-lg">
+                                    <Minus className="h-5 w-5 text-slate-600" />
+                                </div>
+                                全員未入力に戻す
+                            </h3>
+                            <button onClick={() => setShowBulkResetConfirm(false)} className="p-1 rounded-full hover:bg-slate-100">
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-center">
+                            <p className="text-slate-800 font-bold text-lg">
+                                {PERIODS.find(p => p.id === period)?.label || `${period}限`}
+                            </p>
+                            <p className="text-slate-600 text-sm mt-1">
+                                {filteredStudents.length}名全員の入力を「未入力」に戻します
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowBulkResetConfirm(false)}
+                                className="flex-1 p-3 rounded-lg border-2 border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all active:scale-95"
+                            >
+                                キャンセル
+                            </button>
+                            <button
+                                onClick={executeBulkReset}
+                                className="flex-1 p-3 rounded-lg bg-slate-600 text-white font-bold hover:bg-slate-700 transition-all active:scale-95 shadow-lg shadow-slate-200 flex items-center justify-center gap-2"
+                            >
+                                <Minus className="h-5 w-5" />
+                                全員リセット
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 text-center">
+                            ※ 未入力ボタンを長押しでこの画面を開けます
                         </p>
                     </div>
                 </div>
