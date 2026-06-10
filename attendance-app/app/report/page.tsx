@@ -295,6 +295,48 @@ export default function ReportPage() {
             createSheet('年間', parseISO(settings.firstTerm.start), parseISO(settings.secondTerm.end));
         }
 
+        // 5. Yearly Trend (出席率推移)
+        const createTrendSheet = () => {
+            const today = new Date();
+            const currentYear = today.getMonth() < 3 ? today.getFullYear() - 1 : today.getFullYear();
+            const months: Date[] = [];
+            for (let i = 0; i < 12; i++) {
+                months.push(new Date(currentYear, 3 + i, 1));
+            }
+
+            const headers = ['氏名', ...months.map(m => `${m.getMonth() + 1}月`), '年間Avg'];
+            const data: (string | number)[][] = [headers];
+
+            filteredStudents.forEach(student => {
+                let totalPresent = 0;
+                let totalSlots = 0;
+
+                const row: (string | number)[] = [student.name];
+
+                months.forEach(m => {
+                    const start = startOfMonth(m);
+                    const end = endOfMonth(m);
+                    const stat = calcStats(student.id, start, end);
+
+                    if (stat.total > 0) {
+                        totalPresent += stat.present;
+                        totalSlots += stat.total;
+                        row.push(`${stat.rate}%`);
+                    } else {
+                        row.push('-');
+                    }
+                });
+
+                const yearlyRate = totalSlots > 0 ? `${((totalPresent / totalSlots) * 100).toFixed(1)}%` : '-';
+                row.push(yearlyRate);
+                data.push(row);
+            });
+
+            const ws = utils.aoa_to_sheet(data);
+            utils.book_append_sheet(wb, ws, '出席率推移');
+        };
+        createTrendSheet();
+
         writeFile(wb, `attendance_report_${selectedGrade}yr_${format(new Date(), 'yyyyMMdd')}.xlsx`);
     };
 
