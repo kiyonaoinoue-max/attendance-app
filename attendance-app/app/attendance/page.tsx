@@ -98,7 +98,7 @@ export default function AttendancePage() {
                 // Auto-scroll to follow the cascade
                 const el = studentRefs.current[student.id];
                 if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.scrollIntoView({ behavior: 'auto', block: 'center' });
                 }
 
                 // Last student: clear animation and scroll to top
