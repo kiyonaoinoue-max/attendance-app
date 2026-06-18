@@ -38,6 +38,12 @@ export default function AttendancePage() {
     const [period, setPeriod] = useState(0); // 0 = HR
     const [overrideDialogPeriod, setOverrideDialogPeriod] = useState<number | null>(null);
     const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const bulkTimersRef = useRef<NodeJS.Timeout[]>([]);
+
+    const clearBulkTimers = useCallback(() => {
+        bulkTimersRef.current.forEach(clearTimeout);
+        bulkTimersRef.current = [];
+    }, []);
 
     const PERIODS = PERIOD_LABELS(settings.periodCount ?? 4);
     const [zoomLevel, setZoomLevel] = useState(1); // 0.4 to 1.4
@@ -78,9 +84,10 @@ export default function AttendancePage() {
         setShowBulkConfirm(false);
         setIsBulkProcessing(true);
         setBulkAnimatingIds(new Set());
+        clearBulkTimers();
 
         filteredStudents.forEach((student, index) => {
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 toggleAttendance(student.id, date, period, 'present');
                 setBulkAnimatingIds(prev => {
                     const next = new Set(prev);
@@ -96,19 +103,24 @@ export default function AttendancePage() {
 
                 // Last student: clear animation and scroll to top
                 if (index === filteredStudents.length - 1) {
-                    setTimeout(() => {
+                    const finalTimer = setTimeout(() => {
                         setBulkAnimatingIds(new Set());
                         setIsBulkProcessing(false);
-                        // Scroll back to top
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        // Scroll back to top (main container)
+                        const container = document.querySelector('main');
+                        if (container) {
+                            container.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
                         if (filteredStudents.length > 0) {
                             setSelectedStudentId(filteredStudents[0].id);
                         }
                     }, 800);
+                    bulkTimersRef.current.push(finalTimer);
                 }
             }, index * 80); // 80ms stagger for smoother scroll tracking
+            bulkTimersRef.current.push(timer);
         });
-    }, [filteredStudents, date, period, toggleAttendance]);
+    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers]);
 
     // Full-day absent (1日欠席) state
     const [showDayAbsentConfirm, setShowDayAbsentConfirm] = useState(false);
@@ -158,18 +170,24 @@ export default function AttendancePage() {
     const executeBulkReset = useCallback(() => {
         setShowBulkResetConfirm(false);
         setIsBulkProcessing(true);
+        clearBulkTimers();
         filteredStudents.forEach((student, index) => {
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 toggleAttendance(student.id, date, period, null);
                 if (index === filteredStudents.length - 1) {
-                    setTimeout(() => {
+                    const finalTimer = setTimeout(() => {
                         setIsBulkProcessing(false);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        const container = document.querySelector('main');
+                        if (container) {
+                            container.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
                     }, 400);
+                    bulkTimersRef.current.push(finalTimer);
                 }
             }, index * 30);
+            bulkTimersRef.current.push(timer);
         });
-    }, [filteredStudents, date, period, toggleAttendance]);
+    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers]);
 
     // Auto-select first student on data load or grade switch
     useEffect(() => {
@@ -193,6 +211,15 @@ export default function AttendancePage() {
             const el = studentRefs.current[selectedStudentId];
             if (!el) return;
 
+            // If selecting the first student, scroll main container to top to avoid header hiding and conflict
+            if (filteredStudents.length > 0 && selectedStudentId === filteredStudents[0].id) {
+                const container = document.querySelector('main');
+                if (container) {
+                    container.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                return;
+            }
+
             const rect = el.getBoundingClientRect();
             const viewportHeight = window.innerHeight;
             const headerOffset = 200;
@@ -210,7 +237,12 @@ export default function AttendancePage() {
         }, 50);
 
         return () => clearTimeout(timer);
-    }, [selectedStudentId]);
+    }, [selectedStudentId, filteredStudents]);
+
+    // Clean up bulk timers on parameter changes or unmount
+    useEffect(() => {
+        return () => clearBulkTimers();
+    }, [date, period, selectedGrade, clearBulkTimers]);
 
     useEffect(() => {
         setMounted(true);
@@ -355,7 +387,10 @@ export default function AttendancePage() {
                                     setPeriod(p.id);
                                     if (filteredStudents.length > 0) {
                                         setSelectedStudentId(filteredStudents[0].id);
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                        const container = document.querySelector('main');
+                                        if (container) {
+                                            container.scrollTo({ top: 0, behavior: 'smooth' });
+                                        }
                                     }
                                 }}
                                 onMouseDown={() => handlePeriodLongPressStart(p.id)}
