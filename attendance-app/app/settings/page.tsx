@@ -152,6 +152,8 @@ export default function SettingsPage() {
                                                 alert('1ヶ月の評価ライセンスが有効になりました！\n\n学生数の制限が解除され、1ヶ月間お試しいただけます。');
                                                 setActivationKey('');
                                                 window.location.reload();
+                                            } else if (result === 'eval_used') {
+                                                alert('お試し版は既にご利用済みです。\n\n引き続きご利用いただくには、Proライセンスキーをご購入ください。');
                                             } else {
                                                 alert('無効なライセンスキーです。もう一度確認してください。');
                                             }

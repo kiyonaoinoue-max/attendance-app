@@ -246,6 +246,7 @@ export const useStore = create<AppState>()(
                     settings: state.settings,
                     licenseKey: state.licenseKey,
                     licenseExpiry: state.licenseExpiry,
+                    evalUsed: state.evalUsed,
                 };
                 // Evaluate explicit checking for UTF-8 characters if needed, but for now simple btoa
                 // Use Buffer or unicode safe encoding if Japanese characters are involved (yes they are!).
@@ -268,7 +269,8 @@ export const useStore = create<AppState>()(
                         calendar: data.calendar,
                         settings: data.settings,
                         ...(data.licenseKey !== undefined && { licenseKey: data.licenseKey }),
-                        ...(data.licenseExpiry !== undefined && { licenseExpiry: data.licenseExpiry })
+                        ...(data.licenseExpiry !== undefined && { licenseExpiry: data.licenseExpiry }),
+                        ...(data.evalUsed !== undefined && { evalUsed: data.evalUsed })
                     });
                     // Force persist? persist middleware handles set.
                     return true;
@@ -308,6 +310,7 @@ export const useStore = create<AppState>()(
             // License
             licenseKey: null,
             licenseExpiry: null,
+            evalUsed: false,
 
             activateLicense: (key) => {
                 // Hardcoded validation for MVP
@@ -327,12 +330,18 @@ export const useStore = create<AppState>()(
                 }
 
                 if (key === EVAL_KEY) {
+                    // Check if eval has already been used
+                    if (get().evalUsed) {
+                        return 'eval_used';
+                    }
+
                     const oneMonthFromNow = new Date();
                     oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
 
                     set({
                         licenseKey: key,
-                        licenseExpiry: oneMonthFromNow.getTime()
+                        licenseExpiry: oneMonthFromNow.getTime(),
+                        evalUsed: true
                     });
                     return 'eval';
                 }
