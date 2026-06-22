@@ -99,6 +99,7 @@ export interface AppState {
   licenseKey: string | null;
   licenseExpiry: number | null;
   evalUsed: boolean;
-  activateLicense: (key: string) => false | 'pro' | 'eval' | 'eval_used';
+  proUsed: boolean;
+  activateLicense: (key: string) => false | 'pro' | 'eval' | 'eval_used' | 'pro_used';
   getLicenseStatus: () => 'free' | 'pro' | 'eval' | 'expired';
 }

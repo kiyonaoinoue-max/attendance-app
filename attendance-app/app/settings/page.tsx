@@ -154,6 +154,8 @@ export default function SettingsPage() {
                                                 window.location.reload();
                                             } else if (result === 'eval_used') {
                                                 alert('お試し版は既にご利用済みです。\n\n引き続きご利用いただくには、Proライセンスキーをご購入ください。');
+                                            } else if (result === 'pro_used') {
+                                                alert('このライセンスキーは既に使用済みです。\n\n新しいライセンスキーをご購入ください。');
                                             } else {
                                                 alert('無効なライセンスキーです。もう一度確認してください。');
                                             }

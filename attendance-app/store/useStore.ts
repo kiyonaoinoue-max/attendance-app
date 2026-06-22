@@ -247,6 +247,7 @@ export const useStore = create<AppState>()(
                     licenseKey: state.licenseKey,
                     licenseExpiry: state.licenseExpiry,
                     evalUsed: state.evalUsed,
+                    proUsed: state.proUsed,
                 };
                 // Evaluate explicit checking for UTF-8 characters if needed, but for now simple btoa
                 // Use Buffer or unicode safe encoding if Japanese characters are involved (yes they are!).
@@ -270,7 +271,8 @@ export const useStore = create<AppState>()(
                         settings: data.settings,
                         ...(data.licenseKey !== undefined && { licenseKey: data.licenseKey }),
                         ...(data.licenseExpiry !== undefined && { licenseExpiry: data.licenseExpiry }),
-                        ...(data.evalUsed !== undefined && { evalUsed: data.evalUsed })
+                        ...(data.evalUsed !== undefined && { evalUsed: data.evalUsed }),
+                        ...(data.proUsed !== undefined && { proUsed: data.proUsed })
                     });
                     // Force persist? persist middleware handles set.
                     return true;
@@ -311,6 +313,7 @@ export const useStore = create<AppState>()(
             licenseKey: null,
             licenseExpiry: null,
             evalUsed: false,
+            proUsed: false,
 
             activateLicense: (key) => {
                 // Hardcoded validation for MVP
@@ -319,12 +322,18 @@ export const useStore = create<AppState>()(
                 const EVAL_KEY = "EVAL20261M";
 
                 if (key === VALID_KEY) {
+                    // Check if pro has already been used
+                    if (get().proUsed) {
+                        return 'pro_used';
+                    }
+
                     const oneYearFromNow = new Date();
                     oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
                     set({
                         licenseKey: key,
-                        licenseExpiry: oneYearFromNow.getTime()
+                        licenseExpiry: oneYearFromNow.getTime(),
+                        proUsed: true
                     });
                     return 'pro';
                 }
