@@ -65,6 +65,11 @@ export default function AttendancePage() {
     // Filter students by selected Grade
     const filteredStudents: Student[] = students.filter((s: Student) => (s.grade || 1) === selectedGrade);
 
+    const [showBulkConfirm, setShowBulkConfirm] = useState(false);
+    const [bulkAnimatingIds, setBulkAnimatingIds] = useState<Set<string>>(new Set());
+    const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+    const bulkLongPressRef = useRef<NodeJS.Timeout | null>(null);
+
     // スクロール時に画面中央を通過したカードをアクティブ（風の追従）にするステートと処理
     const [scrollActiveStudentId, setScrollActiveStudentId] = useState<string | null>(null);
 
@@ -113,11 +118,6 @@ export default function AttendancePage() {
             clearTimeout(timeoutId);
         };
     }, [filteredStudents, isBulkProcessing]);
-
-    const [showBulkConfirm, setShowBulkConfirm] = useState(false);
-    const [bulkAnimatingIds, setBulkAnimatingIds] = useState<Set<string>>(new Set());
-    const [isBulkProcessing, setIsBulkProcessing] = useState(false);
-    const bulkLongPressRef = useRef<NodeJS.Timeout | null>(null);
 
     // Long press handlers for bulk present
     const handleBulkLongPressStart = useCallback(() => {
