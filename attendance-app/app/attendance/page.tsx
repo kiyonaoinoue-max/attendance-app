@@ -84,12 +84,12 @@ export default function AttendancePage() {
         }
     }, []);
 
-    // カスケードのstagger計算: easeOutCubicで最初ふんわり→後半加速
+    // カスケードのstagger計算: easeInCubicで最初ゆっくり→後半加速
     const getStaggerDelay = useCallback((index: number, total: number) => {
         if (total <= 1) return 0;
         const TOTAL_DURATION = 4000; // 全体の目標時間(ms) ゆったりめ
         const t = index / (total - 1);
-        const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic: 最初にたっぷりタメ
+        const eased = Math.pow(t, 3); // easeInCubic: 最初はタメ、後半に一気に加速
         return Math.round(eased * TOTAL_DURATION);
     }, []);
 
@@ -119,8 +119,8 @@ export default function AttendancePage() {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / totalDuration, 1);
                 
-                // アニメーション進行カーブ（getStaggerDelayで使っているeaseOutCubic）を適用
-                const eased = 1 - Math.pow(1 - progress, 3);
+                // アニメーション進行カーブ（getStaggerDelayで使っているeaseInCubic）を適用
+                const eased = Math.pow(progress, 3);
                 
                 // 開始スクロール位置（0）から最大スクロール位置（scrollEnd）まで、進行度に合わせて完全同期でスクロール
                 container.scrollTop = scrollEnd * eased;
