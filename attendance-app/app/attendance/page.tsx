@@ -107,19 +107,40 @@ export default function AttendancePage() {
         // 2. アニメーション用IDを全員分一括セット（CSSのanimation-delayでカスケード）
         setBulkAnimatingIds(new Set(filteredStudents.map(s => s.id)));
 
-        // 3. スクロール追従: easeOutCubicカーブに合わせてスクロール
+        // 3. スクロール追従: アニメーションの進行（getStaggerDelay）に合わせて、光っている生徒カードが画面中央にくるようにスクロール
         const container = document.querySelector('main');
         const totalDuration = 4000;
         if (container) {
-            const scrollStart = container.scrollTop;
-            const scrollEnd = container.scrollHeight - container.clientHeight;
+            const containerHeight = container.clientHeight;
             const startTime = performance.now();
 
             const animateScroll = () => {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / totalDuration, 1);
-                // スクロール自体は一定速度（リニア）にして、カスケードの緩急と相殺させないようにする
-                container.scrollTop = scrollStart + (scrollEnd - scrollStart) * progress;
+
+                // 現在の時間において、アニメーションが開始されているはずの最新の生徒を探す
+                let activeIndex = 0;
+                for (let i = 0; i < filteredStudents.length; i++) {
+                    if (getStaggerDelay(i, filteredStudents.length) <= elapsed) {
+                        activeIndex = i;
+                    } else {
+                        break;
+                    }
+                }
+
+                // アクティブな生徒のDOM要素を取得
+                const student = filteredStudents[activeIndex];
+                const el = studentRefs.current[student.id];
+                if (el) {
+                    // 要素のコンテナ内での相対位置から、画面中央に配置するためのscrollTopを計算
+                    const elOffsetTop = el.offsetTop;
+                    const elHeight = el.clientHeight;
+                    const targetScrollTop = elOffsetTop - (containerHeight / 2) + (elHeight / 2);
+
+                    // 急激なジャンプを防ぐため、現在のscrollTopからターゲットのscrollTopへ滑らかに補間(イージング)
+                    container.scrollTop = container.scrollTop + (targetScrollTop - container.scrollTop) * 0.15;
+                }
+
                 if (progress < 1) {
                     scrollRafRef.current = requestAnimationFrame(animateScroll);
                 }
