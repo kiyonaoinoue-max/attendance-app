@@ -84,12 +84,12 @@ export default function AttendancePage() {
         }
     }, []);
 
-    // カスケードのstagger計算: easeOutカーブで最初ゆっくり→後半加速
+    // カスケードのstagger計算: easeOutCubicで最初ふんわり→後半加速
     const getStaggerDelay = useCallback((index: number, total: number) => {
         if (total <= 1) return 0;
-        const TOTAL_DURATION = 2500; // 全体の目標時間(ms)
+        const TOTAL_DURATION = 4000; // 全体の目標時間(ms) ゆったりめ
         const t = index / (total - 1);
-        const eased = 1 - Math.pow(1 - t, 2); // easeOutQuad
+        const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic: 最初にたっぷりタメ
         return Math.round(eased * TOTAL_DURATION);
     }, []);
 
@@ -107,9 +107,9 @@ export default function AttendancePage() {
         // 2. アニメーション用IDを全員分一括セット（CSSのanimation-delayでカスケード）
         setBulkAnimatingIds(new Set(filteredStudents.map(s => s.id)));
 
-        // 3. スクロール追従: easeOutカーブに合わせてスクロール
+        // 3. スクロール追従: easeOutCubicカーブに合わせてスクロール
         const container = document.querySelector('main');
-        const totalDuration = 2500;
+        const totalDuration = 4000;
         if (container) {
             const scrollStart = container.scrollTop;
             const scrollEnd = container.scrollHeight - container.clientHeight;
@@ -118,8 +118,8 @@ export default function AttendancePage() {
             const animateScroll = () => {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / totalDuration, 1);
-                // 同じeaseOutカーブでスクロールも同期
-                const eased = 1 - Math.pow(1 - progress, 2);
+                // 同じeaseOutCubicカーブでスクロールも同期
+                const eased = 1 - Math.pow(1 - progress, 3);
                 container.scrollTop = scrollStart + (scrollEnd - scrollStart) * eased;
                 if (progress < 1) {
                     scrollRafRef.current = requestAnimationFrame(animateScroll);
