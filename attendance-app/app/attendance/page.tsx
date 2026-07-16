@@ -487,7 +487,8 @@ export default function AttendancePage() {
                                     onClick={() => setSelectedStudentId(student.id)}
                                     className={cn(
                                         "flex items-center justify-between bg-white rounded-lg border shadow-sm select-none overflow-hidden cursor-pointer",
-                                        isSelected ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 z-10" : "border-slate-200 hover:border-slate-300",
+                                        "transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.005] hover:border-green-400 hover:shadow-md hover:shadow-green-100/80",
+                                        isSelected ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 z-10" : "border-slate-200",
                                         bulkAnimatingIds.has(student.id) && "animate-bulk-highlight"
                                     )}
                                     style={{
