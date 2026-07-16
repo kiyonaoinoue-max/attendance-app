@@ -99,15 +99,13 @@ export default function AttendancePage() {
         setIsBulkProcessing(true);
         clearBulkTimers();
 
-        // 1. データを一括更新（React 18のbatchingで1回のレンダリング）
-        filteredStudents.forEach(student => {
-            toggleAttendance(student.id, date, period, 'present');
-        });
+        // 1. 最初はデータを更新せず、アニメーション用IDも空からスタート
+        setBulkAnimatingIds(new Set());
 
-        // 2. アニメーション用IDを全員分一括セット（CSSのanimation-delayでカスケード）
-        setBulkAnimatingIds(new Set(filteredStudents.map(s => s.id)));
+        // すでに処理した生徒のIDをトラッキングするためのローカルSet
+        const processedIds = new Set<string>();
 
-        // 3. スクロール追従: アニメーションの進行（getStaggerDelay）に合わせて、光っている生徒カードが画面中央にくるようにスクロール
+        // 2. スクロール追従とデータ順次更新: アニメーションの進行に合わせてステータスを変更＆光らせる
         const container = document.querySelector('main');
         const totalDuration = 4000;
         if (container) {
@@ -119,19 +117,43 @@ export default function AttendancePage() {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / totalDuration, 1);
                 
-                // アニメーション進行カーブ（getStaggerDelayで使っているeaseInCubic）を適用
+                // アニメーション進行カーブ（easeInCubic）を適用
                 const eased = Math.pow(progress, 3);
                 
                 // 開始スクロール位置（0）から最大スクロール位置（scrollEnd）まで、進行度に合わせて完全同期でスクロール
                 container.scrollTop = scrollEnd * eased;
 
+                // 現在の時間において、アクティブ（風が到達した）な生徒を特定し、順次「出席」に切り替える
+                let updatedAny = false;
+                filteredStudents.forEach((student, index) => {
+                    const staggerDelay = getStaggerDelay(index, filteredStudents.length);
+                    if (staggerDelay <= elapsed && !processedIds.has(student.id)) {
+                        // データを出席に更新（チェックマークがピカッとつく）
+                        toggleAttendance(student.id, date, period, 'present');
+                        processedIds.add(student.id);
+                        updatedAny = true;
+                    }
+                });
+
+                // 新しく出席になった生徒がいれば、光るアニメーション状態を一括でReactに通知
+                if (updatedAny) {
+                    setBulkAnimatingIds(new Set(processedIds));
+                }
+
                 if (progress < 1) {
                     scrollRafRef.current = requestAnimationFrame(animateScroll);
                 } else {
-                    // 確実に最後は一番下までスクロールさせる
+                    // 確実に最後は全員出席にして一番下までスクロールさせる
+                    filteredStudents.forEach(student => {
+                        if (!processedIds.has(student.id)) {
+                            toggleAttendance(student.id, date, period, 'present');
+                            processedIds.add(student.id);
+                        }
+                    });
+                    setBulkAnimatingIds(new Set(processedIds));
                     container.scrollTop = scrollEnd;
                     
-                    // 【改善】スクロール追従アニメーションが「物理的に完了」した後に、最後の余韻を待ってリセット処理を入れる
+                    // すべての風が通り抜けた後、最後の余韻を待ってリセット処理を入れる
                     const finalTimer = setTimeout(() => {
                         setBulkAnimatingIds(new Set());
                         setIsBulkProcessing(false);
@@ -148,7 +170,7 @@ export default function AttendancePage() {
             };
             scrollRafRef.current = requestAnimationFrame(animateScroll);
         }
-    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers]);
+    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers, getStaggerDelay]);
 
     // Full-day absent (1日欠席) state
     const [showDayAbsentConfirm, setShowDayAbsentConfirm] = useState(false);
@@ -469,7 +491,6 @@ export default function AttendancePage() {
                                         bulkAnimatingIds.has(student.id) && "animate-bulk-highlight"
                                     )}
                                     style={{
-                                        ...(bulkAnimatingIds.has(student.id) ? { animationDelay: `${getStaggerDelay(index, filteredStudents.length)}ms` } : {}),
                                         padding: `${16 * zoomLevel}px`,
                                         minHeight: `${80 * zoomLevel}px`
                                     }}
