@@ -128,44 +128,49 @@ export default function AttendancePage() {
                     }
                 }
 
+                // 最後のステップでは強制的に最後の生徒をアクティブにする
+                if (progress === 1) {
+                    activeIndex = filteredStudents.length - 1;
+                }
+
                 // アクティブな生徒のDOM要素を取得
                 const student = filteredStudents[activeIndex];
-                const el = studentRefs.current[student.id];
-                if (el) {
-                    // 要素のコンテナ内での相対位置から、画面中央に配置するためのscrollTopを計算
-                    const elOffsetTop = el.offsetTop;
-                    const elHeight = el.clientHeight;
-                    const scrollEnd = container.scrollHeight - containerHeight;
-                    const rawTarget = elOffsetTop - (containerHeight / 2) + (elHeight / 2);
-                    // スクロール可能な上限・下限内に収める
-                    const targetScrollTop = Math.max(0, Math.min(rawTarget, scrollEnd));
+                if (student) {
+                    const el = studentRefs.current[student.id];
+                    if (el) {
+                        // 要素のコンテナ内での相対位置から、画面中央に配置するためのscrollTopを計算
+                        const elOffsetTop = el.offsetTop;
+                        const elHeight = el.clientHeight;
+                        const scrollEnd = container.scrollHeight - containerHeight;
+                        const rawTarget = elOffsetTop - (containerHeight / 2) + (elHeight / 2);
+                        // スクロール可能な上限・下限内に収める
+                        const targetScrollTop = Math.max(0, Math.min(rawTarget, scrollEnd));
 
-                    // 急激なジャンプを防ぐため、現在のscrollTopからターゲットのscrollTopへ滑らかに補間(イージング)
-                    container.scrollTop = container.scrollTop + (targetScrollTop - container.scrollTop) * 0.15;
+                        // 急激なジャンプを防ぐため、現在のscrollTopからターゲットのscrollTopへ滑らかに補間(イージング)
+                        container.scrollTop = container.scrollTop + (targetScrollTop - container.scrollTop) * 0.15;
+                    }
                 }
 
                 if (progress < 1) {
                     scrollRafRef.current = requestAnimationFrame(animateScroll);
+                } else {
+                    // 【改善】スクロール追従アニメーションが「物理的に完了」した後に、最後の余韻を待ってリセット処理を入れる
+                    const finalTimer = setTimeout(() => {
+                        setBulkAnimatingIds(new Set());
+                        setIsBulkProcessing(false);
+                        const mainEl = document.querySelector('main');
+                        if (mainEl) {
+                            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                        if (filteredStudents.length > 0) {
+                            setSelectedStudentId(filteredStudents[0].id);
+                        }
+                    }, 1400); // 最後の生徒が光り始めてから1200msアニメーションするため、1400ms後にクリアして戻す
+                    bulkTimersRef.current.push(finalTimer);
                 }
             };
             scrollRafRef.current = requestAnimationFrame(animateScroll);
         }
-
-        // 4. アニメーション完了後にクリア＆トップへスクロール
-        // 最後の生徒が光り始めるのが4000ms時点で、そこからアニメーションが1200ms持続するため、
-        // 完全に光りきってからリセットするために待機時間を 4000 + 1400 = 5400ms に設定
-        const finalTimer = setTimeout(() => {
-            setBulkAnimatingIds(new Set());
-            setIsBulkProcessing(false);
-            const mainEl = document.querySelector('main');
-            if (mainEl) {
-                mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-            if (filteredStudents.length > 0) {
-                setSelectedStudentId(filteredStudents[0].id);
-            }
-        }, totalDuration + 1400);
-        bulkTimersRef.current.push(finalTimer);
     }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers, getStaggerDelay]);
 
     // Full-day absent (1日欠席) state
