@@ -82,12 +82,6 @@ export default function AttendancePage() {
         const handleScroll = () => {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => {
-                // 一括自動処理中はスクロール追従を無効化する
-                if (isBulkProcessing) {
-                    setScrollActiveStudentId(null);
-                    return;
-                }
-
                 const containerRect = container.getBoundingClientRect();
                 const centerY = containerRect.top + containerRect.height / 2;
 
@@ -156,7 +150,7 @@ export default function AttendancePage() {
 
         // 2. スクロール追従とデータ順次更新: アニメーションの進行に合わせてステータスを変更＆光らせる
         const container = document.querySelector('main');
-        const totalDuration = 4000;
+        const totalDuration = 5000; // 5秒に延長してふんわり感を強調
         if (container) {
             const containerHeight = container.clientHeight;
             const scrollEnd = container.scrollHeight - containerHeight;
@@ -172,15 +166,22 @@ export default function AttendancePage() {
                 // 開始スクロール位置（0）から最大スクロール位置（scrollEnd）まで、進行度に合わせて完全同期でスクロール
                 container.scrollTop = scrollEnd * eased;
 
-                // 現在の時間において、アクティブ（風が到達した）な生徒を特定し、順次「出席」に切り替える
+                // スクロールコンテナの中央座標を計算
+                const containerRect = container.getBoundingClientRect();
+                const centerY = containerRect.top + containerRect.height / 2;
+
+                // 現在画面中央を通過している生徒を物理的な位置からリアルタイム検出して出席にする
                 let updatedAny = false;
-                filteredStudents.forEach((student, index) => {
-                    const staggerDelay = getStaggerDelay(index, filteredStudents.length);
-                    if (staggerDelay <= elapsed && !processedIds.has(student.id)) {
-                        // データを出席に更新（チェックマークがピカッとつく）
-                        toggleAttendance(student.id, date, period, 'present');
-                        processedIds.add(student.id);
-                        updatedAny = true;
+                filteredStudents.forEach((student) => {
+                    const el = studentRefs.current[student.id];
+                    if (el && !processedIds.has(student.id)) {
+                        const rect = el.getBoundingClientRect();
+                        // カードの上端が画面中央ラインより上に入った瞬間に風が当たったと判定
+                        if (rect.top <= centerY) {
+                            toggleAttendance(student.id, date, period, 'present');
+                            processedIds.add(student.id);
+                            updatedAny = true;
+                        }
                     }
                 });
 
@@ -213,13 +214,13 @@ export default function AttendancePage() {
                         if (filteredStudents.length > 0) {
                             setSelectedStudentId(filteredStudents[0].id);
                         }
-                    }, 1400); // 最後の生徒が光り始めてから1200msアニメーションするため、1400ms後にクリアして戻す
+                    }, 1400); // 最後の生徒が光り終えるのを待つ
                     bulkTimersRef.current.push(finalTimer);
                 }
             };
             scrollRafRef.current = requestAnimationFrame(animateScroll);
         }
-    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers, getStaggerDelay]);
+    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers]);
 
     // Full-day absent (1日欠席) state
     const [showDayAbsentConfirm, setShowDayAbsentConfirm] = useState(false);
