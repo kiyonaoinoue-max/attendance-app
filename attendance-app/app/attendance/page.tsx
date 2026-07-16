@@ -84,6 +84,15 @@ export default function AttendancePage() {
         }
     }, []);
 
+    // カスケードのstagger計算: easeOutカーブで最初ゆっくり→後半加速
+    const getStaggerDelay = useCallback((index: number, total: number) => {
+        if (total <= 1) return 0;
+        const TOTAL_DURATION = 2500; // 全体の目標時間(ms)
+        const t = index / (total - 1);
+        const eased = 1 - Math.pow(1 - t, 2); // easeOutQuad
+        return Math.round(eased * TOTAL_DURATION);
+    }, []);
+
     // Execute bulk present with cascade animation + auto-scroll
     const executeBulkPresent = useCallback(() => {
         setShowBulkConfirm(false);
@@ -98,19 +107,20 @@ export default function AttendancePage() {
         // 2. アニメーション用IDを全員分一括セット（CSSのanimation-delayでカスケード）
         setBulkAnimatingIds(new Set(filteredStudents.map(s => s.id)));
 
-        // 3. スクロール追従: requestAnimationFrameでカスケードに合わせてなめらかにスクロール
-        const STAGGER_MS = 60;
+        // 3. スクロール追従: easeOutカーブに合わせてスクロール
         const container = document.querySelector('main');
+        const totalDuration = 2500;
         if (container) {
             const scrollStart = container.scrollTop;
             const scrollEnd = container.scrollHeight - container.clientHeight;
-            const totalDuration = filteredStudents.length * STAGGER_MS;
             const startTime = performance.now();
 
             const animateScroll = () => {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / totalDuration, 1);
-                container.scrollTop = scrollStart + (scrollEnd - scrollStart) * progress;
+                // 同じeaseOutカーブでスクロールも同期
+                const eased = 1 - Math.pow(1 - progress, 2);
+                container.scrollTop = scrollStart + (scrollEnd - scrollStart) * eased;
                 if (progress < 1) {
                     scrollRafRef.current = requestAnimationFrame(animateScroll);
                 }
@@ -119,7 +129,6 @@ export default function AttendancePage() {
         }
 
         // 4. アニメーション完了後にクリア＆トップへスクロール
-        const totalTime = filteredStudents.length * STAGGER_MS + 800;
         const finalTimer = setTimeout(() => {
             setBulkAnimatingIds(new Set());
             setIsBulkProcessing(false);
@@ -130,9 +139,9 @@ export default function AttendancePage() {
             if (filteredStudents.length > 0) {
                 setSelectedStudentId(filteredStudents[0].id);
             }
-        }, totalTime);
+        }, totalDuration + 800);
         bulkTimersRef.current.push(finalTimer);
-    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers]);
+    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers, getStaggerDelay]);
 
     // Full-day absent (1日欠席) state
     const [showDayAbsentConfirm, setShowDayAbsentConfirm] = useState(false);
@@ -453,7 +462,7 @@ export default function AttendancePage() {
                                         bulkAnimatingIds.has(student.id) && "animate-bulk-highlight"
                                     )}
                                     style={{
-                                        ...(bulkAnimatingIds.has(student.id) ? { animationDelay: `${index * 60}ms` } : {}),
+                                        ...(bulkAnimatingIds.has(student.id) ? { animationDelay: `${getStaggerDelay(index, filteredStudents.length)}ms` } : {}),
                                         padding: `${16 * zoomLevel}px`,
                                         minHeight: `${80 * zoomLevel}px`
                                     }}
