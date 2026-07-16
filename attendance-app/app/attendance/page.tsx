@@ -172,7 +172,7 @@ export default function AttendancePage() {
 
                 // 現在のスクロール位置に基づいて、アクティブ（風が到達した）な生徒を物理的に特定して出席にする
                 let updatedAny = false;
-                filteredStudents.forEach((student) => {
+                filteredStudents.forEach((student, index) => {
                     const el = studentRefs.current[student.id];
                     if (el && !processedIds.has(student.id)) {
                         // その生徒が画面中央にくるために必要なスクロール位置を計算
@@ -183,8 +183,12 @@ export default function AttendancePage() {
                         // スクロール限界（底）に達した場合も考慮し、制限をかける
                         const limitScrollTop = Math.max(0, Math.min(targetScrollTop, scrollEnd));
 
-                        // 実際のスクロール量がそのターゲット位置に達した、もしくは最後の生徒でスクロールが完了した瞬間
-                        if (container.scrollTop >= limitScrollTop) {
+                        // 【改善】最初の数人がスクロール開始時に同時に光るのを防ぐため、
+                        // 1人あたり80msずつの「最低限のタメ時間」を保証する条件を追加
+                        const minTimeRequired = index * 80;
+
+                        // 実際のスクロール量がそのターゲット位置に達し、かつ最低保証時間を超えた瞬間
+                        if (container.scrollTop >= limitScrollTop && elapsed >= minTimeRequired) {
                             toggleAttendance(student.id, date, period, 'present');
                             processedIds.add(student.id);
                             updatedAny = true;
