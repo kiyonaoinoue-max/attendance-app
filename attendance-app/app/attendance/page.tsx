@@ -99,7 +99,7 @@ export default function AttendancePage() {
         setBulkAnimatingIds(new Set(filteredStudents.map(s => s.id)));
 
         // 3. スクロール追従: requestAnimationFrameでカスケードに合わせてなめらかにスクロール
-        const STAGGER_MS = 50;
+        const STAGGER_MS = 60;
         const container = document.querySelector('main');
         if (container) {
             const scrollStart = container.scrollTop;
@@ -453,7 +453,7 @@ export default function AttendancePage() {
                                         bulkAnimatingIds.has(student.id) && "animate-bulk-highlight"
                                     )}
                                     style={{
-                                        ...(bulkAnimatingIds.has(student.id) ? { animationDelay: `${index * 50}ms` } : {}),
+                                        ...(bulkAnimatingIds.has(student.id) ? { animationDelay: `${index * 60}ms` } : {}),
                                         padding: `${16 * zoomLevel}px`,
                                         minHeight: `${80 * zoomLevel}px`
                                     }}

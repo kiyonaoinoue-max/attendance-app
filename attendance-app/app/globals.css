@@ -68,11 +68,17 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     border-color: #e2e8f0;
   }
-  40% {
-    background: linear-gradient(to right, #dcfce7, #ecfdf5);
-    transform: scale(1.02);
-    box-shadow: 0 10px 15px -3px rgba(74, 222, 128, 0.3);
+  25% {
+    background: linear-gradient(to right, #bbf7d0, #d1fae5);
+    transform: scale(1.03);
+    box-shadow: 0 12px 25px -5px rgba(74, 222, 128, 0.45);
     border-color: #4ade80;
+  }
+  50% {
+    background: linear-gradient(to right, #dcfce7, #ecfdf5);
+    transform: scale(1.015);
+    box-shadow: 0 6px 12px -3px rgba(74, 222, 128, 0.2);
+    border-color: #86efac;
   }
   100% {
     background: white;
@@ -83,7 +89,7 @@
 }
 
 .animate-bulk-highlight {
-  animation: bulk-highlight 0.7s ease both;
+  animation: bulk-highlight 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 :root {
