@@ -160,8 +160,8 @@ export default function AttendancePage() {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / totalDuration, 1);
                 
-                // アニメーション進行カーブ（easeInCubic）を適用
-                const eased = Math.pow(progress, 3);
+                // アニメーション進行カーブ（タメと加速のバランスをとるため2.2乗に調整）
+                const eased = Math.pow(progress, 2.2);
                 
                 // 開始スクロール位置（0）から最大スクロール位置（scrollEnd）まで、進行度に合わせて完全同期でスクロール
                 container.scrollTop = scrollEnd * eased;
