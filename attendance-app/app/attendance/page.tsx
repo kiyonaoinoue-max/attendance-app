@@ -118,9 +118,8 @@ export default function AttendancePage() {
             const animateScroll = () => {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / totalDuration, 1);
-                // 同じeaseOutCubicカーブでスクロールも同期
-                const eased = 1 - Math.pow(1 - progress, 3);
-                container.scrollTop = scrollStart + (scrollEnd - scrollStart) * eased;
+                // スクロール自体は一定速度（リニア）にして、カスケードの緩急と相殺させないようにする
+                container.scrollTop = scrollStart + (scrollEnd - scrollStart) * progress;
                 if (progress < 1) {
                     scrollRafRef.current = requestAnimationFrame(animateScroll);
                 }
