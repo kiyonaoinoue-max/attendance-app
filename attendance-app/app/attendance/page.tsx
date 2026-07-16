@@ -65,6 +65,55 @@ export default function AttendancePage() {
     // Filter students by selected Grade
     const filteredStudents: Student[] = students.filter((s: Student) => (s.grade || 1) === selectedGrade);
 
+    // スクロール時に画面中央を通過したカードをアクティブ（風の追従）にするステートと処理
+    const [scrollActiveStudentId, setScrollActiveStudentId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const container = document.querySelector('main');
+        if (!container) return;
+
+        let timeoutId: NodeJS.Timeout;
+
+        const handleScroll = () => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                // 一括自動処理中はスクロール追従を無効化する
+                if (isBulkProcessing) {
+                    setScrollActiveStudentId(null);
+                    return;
+                }
+
+                const containerRect = container.getBoundingClientRect();
+                const centerY = containerRect.top + containerRect.height / 2;
+
+                let closestStudentId: string | null = null;
+                let minDistance = Infinity;
+
+                Object.entries(studentRefs.current).forEach(([id, el]) => {
+                    if (el) {
+                        const rect = el.getBoundingClientRect();
+                        const elementCenterY = rect.top + rect.height / 2;
+                        const distance = Math.abs(elementCenterY - centerY);
+
+                        // 画面の中央ライン付近（要素の高さの80%以内）にあるものを対象にする
+                        if (distance < rect.height * 0.8 && distance < minDistance) {
+                            minDistance = distance;
+                            closestStudentId = id;
+                        }
+                    }
+                });
+
+                setScrollActiveStudentId(closestStudentId);
+            }, 15); // 反応速度重視で15msでスロットル
+        };
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            container.removeEventListener('scroll', handleScroll);
+            clearTimeout(timeoutId);
+        };
+    }, [filteredStudents, isBulkProcessing]);
+
     const [showBulkConfirm, setShowBulkConfirm] = useState(false);
     const [bulkAnimatingIds, setBulkAnimatingIds] = useState<Set<string>>(new Set());
     const [isBulkProcessing, setIsBulkProcessing] = useState(false);
@@ -489,6 +538,7 @@ export default function AttendancePage() {
                                         "flex items-center justify-between bg-white rounded-lg border shadow-sm select-none overflow-hidden cursor-pointer",
                                         "transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.005] hover:border-green-400 hover:shadow-md hover:shadow-green-100/80",
                                         isSelected ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 z-10" : "border-slate-200",
+                                        scrollActiveStudentId === student.id && "!border-green-400 !shadow-md !shadow-green-100/80 -translate-y-1 scale-[1.005] bg-green-50/10",
                                         bulkAnimatingIds.has(student.id) && "animate-bulk-highlight"
                                     )}
                                     style={{
@@ -678,8 +728,10 @@ export default function AttendancePage() {
                                 )}
                             >
                                 <Minus className="h-6 w-6" />
-                                <span className="font-bold">未入力に戻す</span>
-                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 opacity-60 font-medium">長押し:全員</span>
+                                <div className="flex flex-col items-start leading-tight">
+                                    <span className="font-bold text-[12px] whitespace-nowrap">未入力に戻す</span>
+                                    <span className="text-[9px] text-slate-400 font-medium mt-0.5">長押し:全員</span>
+                                </div>
                             </button>
                         </div>
 
