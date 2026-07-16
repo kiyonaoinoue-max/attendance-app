@@ -83,43 +83,44 @@ export default function AttendancePage() {
     const executeBulkPresent = useCallback(() => {
         setShowBulkConfirm(false);
         setIsBulkProcessing(true);
-        setBulkAnimatingIds(new Set());
         clearBulkTimers();
 
-        filteredStudents.forEach((student, index) => {
-            const timer = setTimeout(() => {
-                toggleAttendance(student.id, date, period, 'present');
-                setBulkAnimatingIds(prev => {
-                    const next = new Set(prev);
-                    next.add(student.id);
-                    return next;
-                });
+        // 1. データを一括更新（React 18のbatchingで1回のレンダリング）
+        filteredStudents.forEach(student => {
+            toggleAttendance(student.id, date, period, 'present');
+        });
 
-                // Auto-scroll to follow the cascade
-                const el = studentRefs.current[student.id];
+        // 2. アニメーション用IDを全員分一括セット（CSSのanimation-delayでカスケード）
+        setBulkAnimatingIds(new Set(filteredStudents.map(s => s.id)));
+
+        // 3. スクロール追従（5人おきに間引いて軽量化）
+        const STAGGER_MS = 50;
+        const SCROLL_EVERY = 5;
+        for (let i = 0; i < filteredStudents.length; i += SCROLL_EVERY) {
+            const targetIndex = Math.min(i + SCROLL_EVERY - 1, filteredStudents.length - 1);
+            const scrollTimer = setTimeout(() => {
+                const el = studentRefs.current[filteredStudents[targetIndex].id];
                 if (el) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
+            }, i * STAGGER_MS);
+            bulkTimersRef.current.push(scrollTimer);
+        }
 
-                // Last student: clear animation and scroll to top
-                if (index === filteredStudents.length - 1) {
-                    const finalTimer = setTimeout(() => {
-                        setBulkAnimatingIds(new Set());
-                        setIsBulkProcessing(false);
-                        // Scroll back to top (main container)
-                        const container = document.querySelector('main');
-                        if (container) {
-                            container.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                        if (filteredStudents.length > 0) {
-                            setSelectedStudentId(filteredStudents[0].id);
-                        }
-                    }, 800);
-                    bulkTimersRef.current.push(finalTimer);
-                }
-            }, index * 80); // 80ms stagger for smoother scroll tracking
-            bulkTimersRef.current.push(timer);
-        });
+        // 4. アニメーション完了後にクリア＆トップへスクロール
+        const totalTime = filteredStudents.length * STAGGER_MS + 800;
+        const finalTimer = setTimeout(() => {
+            setBulkAnimatingIds(new Set());
+            setIsBulkProcessing(false);
+            const container = document.querySelector('main');
+            if (container) {
+                container.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            if (filteredStudents.length > 0) {
+                setSelectedStudentId(filteredStudents[0].id);
+            }
+        }, totalTime);
+        bulkTimersRef.current.push(finalTimer);
     }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers]);
 
     // Full-day absent (1日欠席) state
@@ -436,11 +437,12 @@ export default function AttendancePage() {
                                     ref={el => { studentRefs.current[student.id] = el }}
                                     onClick={() => setSelectedStudentId(student.id)}
                                     className={cn(
-                                        "flex items-center justify-between bg-white rounded-lg border shadow-sm transition-all select-none overflow-hidden cursor-pointer",
+                                        "flex items-center justify-between bg-white rounded-lg border shadow-sm select-none overflow-hidden cursor-pointer",
                                         isSelected ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 z-10" : "border-slate-200 hover:border-slate-300",
-                                        bulkAnimatingIds.has(student.id) && "!bg-gradient-to-r !from-green-100 !to-emerald-50 !border-green-400 ring-2 ring-green-400 ring-offset-1 shadow-lg shadow-green-200/50 scale-[1.02] transition-all duration-300"
+                                        bulkAnimatingIds.has(student.id) && "animate-bulk-highlight"
                                     )}
                                     style={{
+                                        ...(bulkAnimatingIds.has(student.id) ? { animationDelay: `${index * 50}ms` } : {}),
                                         padding: `${16 * zoomLevel}px`,
                                         minHeight: `${80 * zoomLevel}px`
                                     }}
