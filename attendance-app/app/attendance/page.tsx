@@ -112,48 +112,25 @@ export default function AttendancePage() {
         const totalDuration = 4000;
         if (container) {
             const containerHeight = container.clientHeight;
+            const scrollEnd = container.scrollHeight - containerHeight;
             const startTime = performance.now();
 
             const animateScroll = () => {
                 const elapsed = performance.now() - startTime;
                 const progress = Math.min(elapsed / totalDuration, 1);
-
-                // 現在の時間において、アニメーションが開始されているはずの最新の生徒を探す
-                let activeIndex = 0;
-                for (let i = 0; i < filteredStudents.length; i++) {
-                    if (getStaggerDelay(i, filteredStudents.length) <= elapsed) {
-                        activeIndex = i;
-                    } else {
-                        break;
-                    }
-                }
-
-                // 最後のステップでは強制的に最後の生徒をアクティブにする
-                if (progress === 1) {
-                    activeIndex = filteredStudents.length - 1;
-                }
-
-                // アクティブな生徒のDOM要素を取得
-                const student = filteredStudents[activeIndex];
-                if (student) {
-                    const el = studentRefs.current[student.id];
-                    if (el) {
-                        // 要素のコンテナ内での相対位置から、画面中央に配置するためのscrollTopを計算
-                        const elOffsetTop = el.offsetTop;
-                        const elHeight = el.clientHeight;
-                        const scrollEnd = container.scrollHeight - containerHeight;
-                        const rawTarget = elOffsetTop - (containerHeight / 2) + (elHeight / 2);
-                        // スクロール可能な上限・下限内に収める
-                        const targetScrollTop = Math.max(0, Math.min(rawTarget, scrollEnd));
-
-                        // 急激なジャンプを防ぐため、現在のscrollTopからターゲットのscrollTopへ滑らかに補間(イージング)
-                        container.scrollTop = container.scrollTop + (targetScrollTop - container.scrollTop) * 0.15;
-                    }
-                }
+                
+                // アニメーション進行カーブ（getStaggerDelayで使っているeaseOutCubic）を適用
+                const eased = 1 - Math.pow(1 - progress, 3);
+                
+                // 開始スクロール位置（0）から最大スクロール位置（scrollEnd）まで、進行度に合わせて完全同期でスクロール
+                container.scrollTop = scrollEnd * eased;
 
                 if (progress < 1) {
                     scrollRafRef.current = requestAnimationFrame(animateScroll);
                 } else {
+                    // 確実に最後は一番下までスクロールさせる
+                    container.scrollTop = scrollEnd;
+                    
                     // 【改善】スクロール追従アニメーションが「物理的に完了」した後に、最後の余韻を待ってリセット処理を入れる
                     const finalTimer = setTimeout(() => {
                         setBulkAnimatingIds(new Set());
@@ -171,7 +148,7 @@ export default function AttendancePage() {
             };
             scrollRafRef.current = requestAnimationFrame(animateScroll);
         }
-    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers, getStaggerDelay]);
+    }, [filteredStudents, date, period, toggleAttendance, clearBulkTimers]);
 
     // Full-day absent (1日欠席) state
     const [showDayAbsentConfirm, setShowDayAbsentConfirm] = useState(false);
