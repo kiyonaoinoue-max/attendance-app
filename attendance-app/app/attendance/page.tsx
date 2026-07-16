@@ -170,14 +170,21 @@ export default function AttendancePage() {
                 const containerRect = container.getBoundingClientRect();
                 const centerY = containerRect.top + containerRect.height / 2;
 
-                // 現在画面中央を通過している生徒を物理的な位置からリアルタイム検出して出席にする
+                // 現在のスクロール位置に基づいて、アクティブ（風が到達した）な生徒を物理的に特定して出席にする
                 let updatedAny = false;
                 filteredStudents.forEach((student) => {
                     const el = studentRefs.current[student.id];
                     if (el && !processedIds.has(student.id)) {
-                        const rect = el.getBoundingClientRect();
-                        // カードの上端が画面中央ラインより上に入った瞬間に風が当たったと判定
-                        if (rect.top <= centerY) {
+                        // その生徒が画面中央にくるために必要なスクロール位置を計算
+                        const elOffsetTop = el.offsetTop;
+                        const elHeight = el.clientHeight;
+                        const targetScrollTop = elOffsetTop - (containerHeight / 2) + (elHeight / 2);
+                        
+                        // スクロール限界（底）に達した場合も考慮し、制限をかける
+                        const limitScrollTop = Math.max(0, Math.min(targetScrollTop, scrollEnd));
+
+                        // 実際のスクロール量がそのターゲット位置に達した、もしくは最後の生徒でスクロールが完了した瞬間
+                        if (container.scrollTop >= limitScrollTop) {
                             toggleAttendance(student.id, date, period, 'present');
                             processedIds.add(student.id);
                             updatedAny = true;
