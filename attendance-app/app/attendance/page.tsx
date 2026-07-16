@@ -39,10 +39,15 @@ export default function AttendancePage() {
     const [overrideDialogPeriod, setOverrideDialogPeriod] = useState<number | null>(null);
     const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
     const bulkTimersRef = useRef<NodeJS.Timeout[]>([]);
+    const scrollRafRef = useRef<number | null>(null);
 
     const clearBulkTimers = useCallback(() => {
         bulkTimersRef.current.forEach(clearTimeout);
         bulkTimersRef.current = [];
+        if (scrollRafRef.current) {
+            cancelAnimationFrame(scrollRafRef.current);
+            scrollRafRef.current = null;
+        }
     }, []);
 
     const PERIODS = PERIOD_LABELS(settings.periodCount ?? 4);
@@ -93,18 +98,24 @@ export default function AttendancePage() {
         // 2. アニメーション用IDを全員分一括セット（CSSのanimation-delayでカスケード）
         setBulkAnimatingIds(new Set(filteredStudents.map(s => s.id)));
 
-        // 3. スクロール追従（5人おきに間引いて軽量化）
+        // 3. スクロール追従: requestAnimationFrameでカスケードに合わせてなめらかにスクロール
         const STAGGER_MS = 50;
-        const SCROLL_EVERY = 5;
-        for (let i = 0; i < filteredStudents.length; i += SCROLL_EVERY) {
-            const targetIndex = Math.min(i + SCROLL_EVERY - 1, filteredStudents.length - 1);
-            const scrollTimer = setTimeout(() => {
-                const el = studentRefs.current[filteredStudents[targetIndex].id];
-                if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const container = document.querySelector('main');
+        if (container) {
+            const scrollStart = container.scrollTop;
+            const scrollEnd = container.scrollHeight - container.clientHeight;
+            const totalDuration = filteredStudents.length * STAGGER_MS;
+            const startTime = performance.now();
+
+            const animateScroll = () => {
+                const elapsed = performance.now() - startTime;
+                const progress = Math.min(elapsed / totalDuration, 1);
+                container.scrollTop = scrollStart + (scrollEnd - scrollStart) * progress;
+                if (progress < 1) {
+                    scrollRafRef.current = requestAnimationFrame(animateScroll);
                 }
-            }, i * STAGGER_MS);
-            bulkTimersRef.current.push(scrollTimer);
+            };
+            scrollRafRef.current = requestAnimationFrame(animateScroll);
         }
 
         // 4. アニメーション完了後にクリア＆トップへスクロール
@@ -112,9 +123,9 @@ export default function AttendancePage() {
         const finalTimer = setTimeout(() => {
             setBulkAnimatingIds(new Set());
             setIsBulkProcessing(false);
-            const container = document.querySelector('main');
-            if (container) {
-                container.scrollTo({ top: 0, behavior: 'smooth' });
+            const mainEl = document.querySelector('main');
+            if (mainEl) {
+                mainEl.scrollTo({ top: 0, behavior: 'smooth' });
             }
             if (filteredStudents.length > 0) {
                 setSelectedStudentId(filteredStudents[0].id);
