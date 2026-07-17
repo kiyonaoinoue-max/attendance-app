@@ -316,6 +316,9 @@ export default function AttendancePage() {
     // Auto-scroll to selected student when selection changes (only if outside viewport)
     useEffect(() => {
         if (!selectedStudentId) return;
+        // バルク処理中（全員出席アニメーション中）は自動スクロール補正を無効化
+        // これにより、手動スクロール中にスクロール位置が先頭に強制的に戻されるのを防ぐ
+        if (isBulkProcessing) return;
 
         // Small delay to ensure DOM is ready
         const timer = setTimeout(() => {
@@ -348,7 +351,7 @@ export default function AttendancePage() {
         }, 50);
 
         return () => clearTimeout(timer);
-    }, [selectedStudentId, filteredStudents]);
+    }, [selectedStudentId, filteredStudents, isBulkProcessing]);
 
     // Clean up bulk timers on parameter changes or unmount
     useEffect(() => {
