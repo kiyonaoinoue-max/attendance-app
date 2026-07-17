@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,8 +62,8 @@ export default function AttendancePage() {
 
     // Bulk attendance (全出席) state
 
-    // Filter students by selected Grade
-    const filteredStudents: Student[] = students.filter((s: Student) => (s.grade || 1) === selectedGrade);
+    // Filter students by selected Grade（useMemoで安定化し、不要な再レンダリングを防止）
+    const filteredStudents: Student[] = useMemo(() => students.filter((s: Student) => (s.grade || 1) === selectedGrade), [students, selectedGrade]);
 
     const [showBulkConfirm, setShowBulkConfirm] = useState(false);
     const [bulkAnimatingIds, setBulkAnimatingIds] = useState<Set<string>>(new Set());
@@ -74,6 +74,14 @@ export default function AttendancePage() {
     const [scrollActiveStudentId, setScrollActiveStudentId] = useState<string | null>(null);
 
     useEffect(() => {
+        // バルク処理中のみスクロール監視を有効にする
+        // 通常時に監視すると、scrollActiveStudentIdのstate更新→再レンダリング→
+        // 自動スクロール補正の再発火という連鎖でスクロールがロックされてしまう
+        if (!isBulkProcessing) {
+            setScrollActiveStudentId(null);
+            return;
+        }
+
         const container = document.querySelector('main');
         if (!container) return;
 
@@ -111,7 +119,7 @@ export default function AttendancePage() {
             container.removeEventListener('scroll', handleScroll);
             clearTimeout(timeoutId);
         };
-    }, [filteredStudents, isBulkProcessing]);
+    }, [isBulkProcessing]);
 
     // Long press handlers for bulk present
     const handleBulkLongPressStart = useCallback(() => {
