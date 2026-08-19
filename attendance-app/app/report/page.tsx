@@ -79,7 +79,7 @@ export default function ReportPage() {
         // Count total slots and present/absent count based on TIMETABLE (not fixed 4)
         let totalSlots = 0;
         let presentCount = 0;
-        let absentCount = 0;
+        let absentDays = 0; // 日単位の欠席カウント
 
         validDays.forEach(d => {
             const dStr = format(d, 'yyyy-MM-dd');
@@ -101,6 +101,10 @@ export default function ReportPage() {
             const periodCount = settings.periodCount ?? 4;
             const hourPerPeriod = settings.hourPerPeriod ?? 1.8;
 
+            // その日の授業コマ数と欠席コマ数をトラッキング（HR=period 0は対象外）
+            let dayScheduledSlots = 0;
+            let dayAbsentSlots = 0;
+
             Array.from({ length: periodCount }, (_, i) => i + 1).forEach(period => {
                 const key = `${dayStr}-${period}`;
                 // Check override first, then fall back to regular timetable
@@ -110,6 +114,7 @@ export default function ReportPage() {
                 // Only count this slot if timetable has a subject set
                 if (subjectId) {
                     totalSlots++; // Count as scheduled slot
+                    dayScheduledSlots++;
                     subjectHeldHours[subjectId] = (subjectHeldHours[subjectId] || 0) + hourPerPeriod;
 
                     const record = attendanceRecords.find(r => r.studentId === studentId && r.date === dStr && r.period === period);
@@ -121,12 +126,17 @@ export default function ReportPage() {
                             presentCount++;
                             subjectHours[subjectId] = (subjectHours[subjectId] || 0) + hourPerPeriod;
                         } else {
-                            absentCount++;
+                            dayAbsentSlots++;
                         }
                     }
                     // No record for this period = not entered yet, do NOT count as present
                 }
             });
+
+            // その日の全授業コマが欠席の場合のみ「欠席1日」としてカウント
+            if (dayScheduledSlots > 0 && dayAbsentSlots === dayScheduledSlots) {
+                absentDays++;
+            }
         });
 
         // Calculate attendance rate
@@ -165,7 +175,7 @@ export default function ReportPage() {
         return {
             rate: attendanceRate,
             present: presentCount,
-            absent: absentCount,
+            absent: absentDays,
             total: totalSlots,
             subjectHours,
             subjectHeldHours,
