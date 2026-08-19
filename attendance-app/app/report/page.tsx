@@ -76,9 +76,10 @@ export default function ReportPage() {
             subjectHeldHours[s.id] = 0;
         });
 
-        // Count total slots and present count based on TIMETABLE (not fixed 4)
+        // Count total slots and present/absent count based on TIMETABLE (not fixed 4)
         let totalSlots = 0;
         let presentCount = 0;
+        let absentCount = 0;
 
         validDays.forEach(d => {
             const dStr = format(d, 'yyyy-MM-dd');
@@ -119,8 +120,9 @@ export default function ReportPage() {
                         if (record.status !== 'absent') {
                             presentCount++;
                             subjectHours[subjectId] = (subjectHours[subjectId] || 0) + hourPerPeriod;
+                        } else {
+                            absentCount++;
                         }
-                        // Absent does not count as present, no hours added
                     }
                     // No record for this period = not entered yet, do NOT count as present
                 }
@@ -163,6 +165,7 @@ export default function ReportPage() {
         return {
             rate: attendanceRate,
             present: presentCount,
+            absent: absentCount,
             total: totalSlots,
             subjectHours,
             subjectHeldHours,
@@ -181,6 +184,7 @@ export default function ReportPage() {
                         <th className="border p-2">番号</th>
                         <th className="border p-2 min-w-[100px]">氏名</th>
                         <th className="border p-2">出席率</th>
+                        <th className="border p-2 text-slate-600">欠席</th>
                         <th className="border p-2 text-red-600">遅刻</th>
                         <th className="border p-2 text-orange-600">早退</th>
                         {subjects.map(s => (
@@ -193,7 +197,7 @@ export default function ReportPage() {
                 <tbody>
                     {filteredStudents.length === 0 ? (
                         <tr>
-                            <td colSpan={5 + subjects.length} className="p-8 text-center text-muted-foreground">
+                            <td colSpan={6 + subjects.length} className="p-8 text-center text-muted-foreground">
                                 {selectedGrade}年生の学生は登録されていません。
                             </td>
                         </tr>
@@ -209,6 +213,7 @@ export default function ReportPage() {
                                     <span className="text-xs text-muted-foreground block">({stat.present}/{stat.total})</span>
                                     <span className="text-[10px] text-slate-400 block" title={stat.daysList}>{stat.daysCount}日間</span>
                                 </td>
+                                <td className="border p-2">{stat.absent}</td>
                                 <td className="border p-2">{stat.late}</td>
                                 <td className="border p-2">{stat.early}</td>
                                 {subjects.map(s => {
@@ -262,13 +267,13 @@ export default function ReportPage() {
 
         const createSheet = (sheetName: string, start: Date, end: Date) => {
             const data: (string | number)[][] = [
-                ['学籍番号', '氏名', 'クラス', `出席率(%)`, '遅刻', '早退', ...subjects.map(s => `${s.name} (出席/必須)`)]
+                ['学籍番号', '氏名', 'クラス', `出席率(%)`, '欠席', '遅刻', '早退', ...subjects.map(s => `${s.name} (出席/必須)`)]
             ];
             // Export filtered students only? Or all? Usually export matches view.
             filteredStudents.forEach(s => {
                 const stat = calcStats(s.id, start, end);
                 data.push([
-                    s.studentNumber, s.name, s.className, `${stat.rate}%`, stat.late, stat.early,
+                    s.studentNumber, s.name, s.className, `${stat.rate}%`, stat.absent, stat.late, stat.early,
                     ...subjects.map(subj => `${(stat.subjectHours[subj.id] || 0).toFixed(1)} / ${(stat.subjectHeldHours[subj.id] || 0).toFixed(1)}`)
                 ]);
             });
