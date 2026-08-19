@@ -80,6 +80,7 @@ export default function ReportPage() {
         let totalSlots = 0;
         let presentCount = 0;
         let absentDays = 0; // 日単位の欠席カウント
+        const earlyDaysSet = new Set<string>(); // 日単位の早退カウント（重複防止用Set）
 
         validDays.forEach(d => {
             const dStr = format(d, 'yyyy-MM-dd');
@@ -104,6 +105,9 @@ export default function ReportPage() {
             // その日の授業コマ数と欠席コマ数をトラッキング（HR=period 0は対象外）
             let dayScheduledSlots = 0;
             let dayAbsentSlots = 0;
+            let dayHasEarlyLeave = false; // その日にearly_leaveマークがあるか
+            let dayHasPresent = false; // その日に出席（遅刻・早退含む）が1コマでもあるか
+            let lastScheduledPeriodStatus: string | null = null; // 最終授業コマのステータス
 
             Array.from({ length: periodCount }, (_, i) => i + 1).forEach(period => {
                 const key = `${dayStr}-${period}`;
@@ -124,10 +128,17 @@ export default function ReportPage() {
                         // Late (遅刻) and early_leave (早退) count as PRESENT
                         if (record.status !== 'absent') {
                             presentCount++;
+                            dayHasPresent = true;
                             subjectHours[subjectId] = (subjectHours[subjectId] || 0) + hourPerPeriod;
+                            if (record.status === 'early_leave') {
+                                dayHasEarlyLeave = true;
+                            }
                         } else {
                             dayAbsentSlots++;
                         }
+                        lastScheduledPeriodStatus = record.status;
+                    } else {
+                        lastScheduledPeriodStatus = null; // 未入力
                     }
                     // No record for this period = not entered yet, do NOT count as present
                 }
@@ -136,6 +147,16 @@ export default function ReportPage() {
             // その日の全授業コマが欠席の場合のみ「欠席1日」としてカウント
             if (dayScheduledSlots > 0 && dayAbsentSlots === dayScheduledSlots) {
                 absentDays++;
+            }
+
+            // 早退の自動検出（日単位）:
+            // 1. 明示的にearly_leaveマークがある日
+            // 2. 最終授業コマが欠席で、少なくとも1コマは出席がある日（全コマ欠席は除外）
+            if (dayScheduledSlots > 0) {
+                const isAllAbsent = dayAbsentSlots === dayScheduledSlots;
+                if (!isAllAbsent && (dayHasEarlyLeave || (lastScheduledPeriodStatus === 'absent' && dayHasPresent))) {
+                    earlyDaysSet.add(dStr);
+                }
             }
         });
 
@@ -164,7 +185,7 @@ export default function ReportPage() {
             }
         });
         const late = lateDaysSet.size;
-        const early = attendanceRecords.filter(r => r.studentId === studentId && r.status === 'early_leave' && parseISO(r.date) >= start && parseISO(r.date) <= end).length;
+        const early = earlyDaysSet.size;
 
         // Round subject hours to 1 decimal place
         Object.keys(subjectHours).forEach(key => {
