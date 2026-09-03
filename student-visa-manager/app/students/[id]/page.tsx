@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { v4 as uuidv4 } from 'uuid';
@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Trash2, Save, Plus, History, Calendar, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Trash2, Save, Plus, History, Calendar, RefreshCw, X } from 'lucide-react';
 
 export default function StudentEditPage() {
   const router = useRouter();
@@ -31,6 +31,18 @@ export default function StudentEditPage() {
   const addStudent = useStore((state: any) => state.addStudent);
   const updateStudent = useStore((state: any) => state.updateStudent);
   const deleteStudent = useStore((state: any) => state.deleteStudent);
+  const removedJapaneseSchools = useStore((state: any) => state.removedJapaneseSchools) || [];
+  const removeJapaneseSchool = useStore((state: any) => state.removeJapaneseSchool);
+
+  // 過去に入力・登録された日本語学校名の重複なしリスト（削除指定されたものは除く）
+  const savedJapaneseSchools = useMemo<string[]>(() => {
+    const rawSchools = students
+      .map((s: Student) => s.japaneseSchoolName?.trim())
+      .filter((s: string | undefined): s is string => Boolean(s));
+    
+    const removedSet = new Set(removedJapaneseSchools);
+    return (Array.from(new Set(rawSchools)) as string[]).filter((s: string) => !removedSet.has(s));
+  }, [students, removedJapaneseSchools]);
 
   const [formData, setFormData] = useState<Partial<Student>>({
     id: uuidv4(),
@@ -492,8 +504,52 @@ export default function StudentEditPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>日本語学校名</Label>
-                <Input value={formData.japaneseSchoolName || ''} onChange={e => handleChange('japaneseSchoolName', e.target.value)} />
+                <div className="flex items-center justify-between">
+                  <Label>日本語学校名</Label>
+                  {savedJapaneseSchools.length > 0 && (
+                    <span className="text-[10px] text-slate-500 font-normal">
+                      過去の登録履歴: {savedJapaneseSchools.length}件
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {savedJapaneseSchools.length > 0 && (
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-normal text-slate-500">ワンクリックで選択入力:</Label>
+                      <div className="flex flex-wrap gap-1.5 p-2 bg-slate-100/80 rounded-lg border border-slate-200">
+                        {savedJapaneseSchools.map((school: string) => (
+                          <div 
+                            key={school} 
+                            className="inline-flex items-center gap-1.5 bg-white border shadow-2xs px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all"
+                            onClick={() => handleChange('japaneseSchoolName', school)}
+                          >
+                            <span>{school}</span>
+                            <button
+                              type="button"
+                              className="text-slate-400 hover:text-red-500 rounded-full p-0.5"
+                              title="履歴候補から削除"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`「${school}」を過去の履歴候補から削除しますか？`)) {
+                                  if (removeJapaneseSchool) removeJapaneseSchool(school);
+                                }
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Input 
+                    placeholder="日本語学校名を入力（例: 〇〇日本語学院）" 
+                    value={formData.japaneseSchoolName || ''} 
+                    onChange={e => handleChange('japaneseSchoolName', e.target.value)} 
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>入学日</Label>

@@ -19,6 +19,10 @@ interface StoreState {
   // UI状態
   selectedGrade: number;
   setSelectedGrade: (grade: number) => void;
+
+  // 日本語学校候補の削除リスト
+  removedJapaneseSchools: string[];
+  removeJapaneseSchool: (schoolName: string) => void;
 }
 
 const defaultSettings: Settings = {
@@ -88,6 +92,13 @@ export const useStore = create<StoreState>()(
       // UI状態
       selectedGrade: 1,
       setSelectedGrade: (grade) => set({ selectedGrade: grade }),
+
+      // 日本語学校候補の削除リスト
+      removedJapaneseSchools: [],
+      removeJapaneseSchool: (schoolName) =>
+        set((state) => ({
+          removedJapaneseSchools: Array.from(new Set([...(state.removedJapaneseSchools || []), schoolName])),
+        })),
     }),
     {
       name: 'student-visa-manager-storage',
