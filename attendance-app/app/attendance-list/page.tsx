@@ -13,10 +13,10 @@ import { AttendanceStatus, AttendanceRecord } from '@/types';
 
 // Symbol mapping for "Paper Attendance Book" style
 const STATUS_SYMBOLS: Record<AttendanceStatus, { symbol: string, color: string }> = {
-    present: { symbol: '○', color: 'text-green-600' },
-    absent: { symbol: '×', color: 'text-red-500' }, // Using '×' (multiplication sign) or '✕'
-    late: { symbol: '△', color: 'text-yellow-600' },
-    early_leave: { symbol: '早', color: 'text-orange-500' },
+    present: { symbol: '○', color: 'text-emerald-600 font-black' },
+    absent: { symbol: '×', color: 'text-rose-600 font-black' },
+    late: { symbol: '△', color: 'text-amber-600 font-black' },
+    early_leave: { symbol: '早', color: 'text-orange-600 font-black' },
 };
 
 const getPeriods = (count: number) => [0, ...Array.from({ length: count }, (_, i) => i + 1)]; // 0=HR
@@ -290,7 +290,7 @@ export default function AttendanceListPage() {
                                                         isNoSubjectSlot ? "bg-slate-200/40" : ""
                                                     )}>
                                                         {status ? (
-                                                            <span className={cn("font-bold text-sm", status.color)}>
+                                                            <span className={cn("font-extrabold text-base md:text-lg leading-none", status.color)}>
                                                                 {status.symbol}
                                                             </span>
                                                         ) : (
