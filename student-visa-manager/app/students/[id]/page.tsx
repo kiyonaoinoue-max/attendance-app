@@ -8,6 +8,7 @@ import {
   Student, 
   RenewalRecord,
   RESIDENCE_STATUS_OPTIONS, 
+  NATIONALITY_OPTIONS,
   EDUCATION_LEVEL_OPTIONS, 
   INDUSTRY_OPTIONS 
 } from '@/types';
@@ -153,11 +154,40 @@ export default function StudentEditPage() {
     .reduce((sum: number, job: any) => sum + (Number(job.weeklyHours) || 0), 0);
 
   const handleSave = () => {
-    if (isNew) {
-      if (addStudent) addStudent(formData as Student);
-    } else {
-      if (updateStudent) updateStudent(id, formData as Student);
+    if (!formData.name || !formData.name.trim()) {
+      alert('氏名（漢字）を入力してください。');
+      return;
     }
+
+    const studentToSave: Student = {
+      id: formData.id || uuidv4(),
+      name: formData.name || '',
+      nameKana: formData.nameKana || '',
+      nameRomaji: formData.nameRomaji || '',
+      studentNumber: formData.studentNumber || '',
+      grade: Number(formData.grade) || 1,
+      className: formData.className || '',
+      residenceCardNumber: formData.residenceCardNumber || '',
+      residenceStatus: formData.residenceStatus || '留学',
+      residenceExpiry: formData.residenceExpiry || '',
+      renewalHistory: formData.renewalHistory || [],
+      nationality: formData.nationality || '',
+      homeCountryEducation: formData.homeCountryEducation || '',
+      japaneseSchoolName: formData.japaneseSchoolName || '',
+      enrollmentDate: formData.enrollmentDate || '',
+      partTimeJobs: formData.partTimeJobs || [],
+      workPermitStatus: formData.workPermitStatus || 'no',
+      workPermitExpiry: formData.workPermitExpiry || '',
+      notes: formData.notes || '',
+    };
+
+    if (isNew) {
+      if (addStudent) addStudent(studentToSave);
+    } else {
+      if (updateStudent) updateStudent(id, studentToSave);
+    }
+
+    alert('データを保存しました。');
     router.push('/students');
   };
 
@@ -434,8 +464,23 @@ export default function StudentEditPage() {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
-                <Label>出身国</Label>
-                <Input value={formData.nationality || ''} onChange={e => handleChange('nationality', e.target.value)} />
+                <Label>出身国・国籍</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <Select 
+                    value={(NATIONALITY_OPTIONS as readonly string[]).includes(formData.nationality || '') ? formData.nationality : ''} 
+                    onValueChange={v => handleChange('nationality', v)}
+                  >
+                    <SelectTrigger><SelectValue placeholder="国籍を選択..." /></SelectTrigger>
+                    <SelectContent>
+                      {NATIONALITY_OPTIONS.map((opt: string) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Input 
+                    placeholder="または国籍を直接入力" 
+                    value={formData.nationality || ''} 
+                    onChange={e => handleChange('nationality', e.target.value)} 
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>最終学歴</Label>
