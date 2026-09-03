@@ -284,13 +284,13 @@ export default function AttendanceListPage() {
                                                 const isNoSubjectSlot = p !== 0 && !hasSub && !isHoliday;
                                                 return (
                                                     <td key={`${dateStr}-${p}`} className={cn(
-                                                        "border-b border-r border-slate-200 text-center h-[32px] p-0 align-middle",
+                                                        "border-b border-r border-slate-200 text-center h-[36px] p-0 align-middle",
                                                         isHoliday ? "bg-slate-100/50" : "",
                                                         p === 0 && !isHoliday ? "bg-slate-50/50" : "",
                                                         isNoSubjectSlot ? "bg-slate-200/40" : ""
                                                     )}>
                                                         {status ? (
-                                                            <span className={cn("font-extrabold text-base md:text-lg leading-none", status.color)}>
+                                                            <span className={cn("font-extrabold text-2xl md:text-3xl leading-none select-none", status.color)}>
                                                                 {status.symbol}
                                                             </span>
                                                         ) : (
