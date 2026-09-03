@@ -112,6 +112,16 @@ export default function StudentEditPage() {
     }
   }, [id, isNew, students]);
 
+  const formatResidenceCardNumber = (val: string) => {
+    if (!val) return '';
+    // 全角英数字を半角に変換
+    const hankaku = val.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) =>
+      String.fromCharCode(s.charCodeAt(0) - 0xfee0)
+    );
+    // スペース（半角・全角）を完全に削除して大文字に統一
+    return hankaku.replace(/[\s　]+/g, '').toUpperCase();
+  };
+
   const handleChange = (field: string, value: any) => {
     setFormData(prev => {
       const next = { ...prev, [field]: value };
@@ -187,7 +197,7 @@ export default function StudentEditPage() {
       studentNumber: formData.studentNumber || '',
       grade: Number(formData.grade) || 1,
       className: formData.className || '',
-      residenceCardNumber: formData.residenceCardNumber || '',
+      residenceCardNumber: formatResidenceCardNumber(formData.residenceCardNumber || ''),
       residenceStatus: formData.residenceStatus || '留学',
       residenceExpiry: formData.residenceExpiry || '',
       renewalHistory: formData.renewalHistory || [],
@@ -299,7 +309,7 @@ export default function StudentEditPage() {
                 <Input 
                   placeholder="例: AB12345678CD" 
                   value={formData.residenceCardNumber || ''} 
-                  onChange={e => handleChange('residenceCardNumber', e.target.value)} 
+                  onChange={e => handleChange('residenceCardNumber', formatResidenceCardNumber(e.target.value))} 
                 />
               </div>
               <div className="space-y-2">
