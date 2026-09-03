@@ -223,7 +223,10 @@ export default function StudentEditPage() {
           戻る
         </Button>
         <h1 className="text-xl font-bold">{isNew ? '新規留学生登録' : '留学生情報編集'}</h1>
-        <div className="w-16"></div> {/* Spacer for centering */}
+        <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700 text-white font-bold size-sm px-4">
+          <Save className="h-4 w-4 mr-1.5" />
+          保存
+        </Button>
       </div>
 
       <Tabs defaultValue="basic" className="w-full">
@@ -645,17 +648,17 @@ export default function StudentEditPage() {
         </TabsContent>
       </Tabs>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t flex gap-4 justify-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10">
+      <div className="fixed bottom-16 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t flex gap-4 justify-center shadow-[0_-4px_12px_rgba(0,0,0,0.15)] z-50">
         <div className="container max-w-2xl flex gap-4 mx-auto">
           {!isNew && (
-            <Button variant="destructive" onClick={handleDelete} className="flex-1">
+            <Button variant="destructive" onClick={handleDelete} className="flex-1 font-bold">
               <Trash2 className="h-4 w-4 mr-2" />
               削除
             </Button>
           )}
-          <Button onClick={handleSave} className="flex-1 bg-green-600 hover:bg-green-700">
-            <Save className="h-4 w-4 mr-2" />
-            保存
+          <Button onClick={handleSave} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold text-base shadow-sm">
+            <Save className="h-5 w-5 mr-2" />
+            保存する
           </Button>
         </div>
       </div>
