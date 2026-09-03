@@ -269,7 +269,7 @@ export default function SettingsPage() {
               </Button>
               
               <AlertDialog>
-                <AlertDialogTrigger asChild>
+                <AlertDialogTrigger>
                   <Button variant="outline">復元 (リストア)</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -303,7 +303,7 @@ export default function SettingsPage() {
             <Label className="text-red-600">危険な操作</Label>
             <div>
               <AlertDialog>
-                <AlertDialogTrigger asChild>
+                <AlertDialogTrigger>
                   <Button variant="destructive">データ全削除</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
