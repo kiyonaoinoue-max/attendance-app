@@ -19,7 +19,8 @@ export interface Student {
   nationality: string;           // 出身国
   homeCountryEducation: string;  // 出身国での最終学歴
   japaneseSchoolName: string;    // 日本語学校名
-  enrollmentDate: string;        // 入学日
+  japaneseSchoolGraduationDate?: string; // 日本語学校の卒業年月日
+  enrollmentDate: string;        // 本校への入学年月日
 
   // アルバイト情報
   partTimeJobs: PartTimeJob[];   // アルバイト先（複数対応）

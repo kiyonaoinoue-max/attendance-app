@@ -48,7 +48,7 @@ export default function StudentEditPage() {
     id: uuidv4(),
     partTimeJobs: [],
     renewalHistory: [],
-    workPermitStatus: 'no',
+    workPermitStatus: 'yes', // デフォルトで資格外活動許可「あり」
   });
 
   // クイック在留期限更新用ステート
@@ -69,6 +69,7 @@ export default function StudentEditPage() {
     setFormData(prev => ({
       ...prev,
       residenceExpiry: newExpiryInput,
+      workPermitExpiry: newExpiryInput, // 資格外活動許可の期限も自動同日同期
       renewalHistory: [record, ...(prev.renewalHistory || [])],
     }));
     setShowQuickRenew(false);
@@ -112,7 +113,14 @@ export default function StudentEditPage() {
   }, [id, isNew, students]);
 
   const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const next = { ...prev, [field]: value };
+      // 在留期限が入力・変更された際、資格外活動許可期限も自動的に同じ日に同期
+      if (field === 'residenceExpiry' && value) {
+        next.workPermitExpiry = value;
+      }
+      return next;
+    });
   };
 
   const handleDatePaste = (field: string, text: string) => {
@@ -186,10 +194,11 @@ export default function StudentEditPage() {
       nationality: formData.nationality || '',
       homeCountryEducation: formData.homeCountryEducation || '',
       japaneseSchoolName: formData.japaneseSchoolName || '',
+      japaneseSchoolGraduationDate: formData.japaneseSchoolGraduationDate || '',
       enrollmentDate: formData.enrollmentDate || '',
       partTimeJobs: formData.partTimeJobs || [],
-      workPermitStatus: formData.workPermitStatus || 'no',
-      workPermitExpiry: formData.workPermitExpiry || '',
+      workPermitStatus: formData.workPermitStatus || 'yes',
+      workPermitExpiry: formData.workPermitExpiry || formData.residenceExpiry || '',
       notes: formData.notes || '',
     };
 
@@ -268,9 +277,15 @@ export default function StudentEditPage() {
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>クラス</Label>
-                <Input value={formData.className || ''} onChange={e => handleChange('className', e.target.value)} />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>クラス</Label>
+                  <Input value={formData.className || ''} onChange={e => handleChange('className', e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>本校への入学年月日</Label>
+                  <Input type="date" value={formData.enrollmentDate || ''} onChange={e => handleChange('enrollmentDate', e.target.value)} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -555,8 +570,8 @@ export default function StudentEditPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>入学日</Label>
-                <Input type="date" value={formData.enrollmentDate || ''} onChange={e => handleChange('enrollmentDate', e.target.value)} />
+                <Label>日本語学校の卒業年月日</Label>
+                <Input type="date" value={formData.japaneseSchoolGraduationDate || ''} onChange={e => handleChange('japaneseSchoolGraduationDate', e.target.value)} />
               </div>
             </CardContent>
           </Card>
@@ -566,19 +581,29 @@ export default function StudentEditPage() {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
-                <Label>資格外活動許可</Label>
-                <Select value={formData.workPermitStatus || 'no'} onValueChange={v => handleChange('workPermitStatus', v)}>
+                <div className="flex items-center justify-between">
+                  <Label>資格外活動許可</Label>
+                  <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    ※原則「あり（許可取得済み）」
+                  </span>
+                </div>
+                <Select value={formData.workPermitStatus || 'yes'} onValueChange={v => handleChange('workPermitStatus', v)}>
                   <SelectTrigger><SelectValue placeholder="選択..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="yes">あり</SelectItem>
-                    <SelectItem value="no">なし</SelectItem>
+                    <SelectItem value="yes">あり（許可取得済み）</SelectItem>
                     <SelectItem value="pending">申請中</SelectItem>
+                    <SelectItem value="no">なし</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {formData.workPermitStatus === 'yes' && (
                 <div className="space-y-2">
-                  <Label>許可期限</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>許可期限</Label>
+                    <span className="text-[10px] text-blue-600 font-medium">
+                      ⚡️ 在留期限と同日に自動同期されます
+                    </span>
+                  </div>
                   <Input type="date" value={formData.workPermitExpiry || ''} onChange={e => handleChange('workPermitExpiry', e.target.value)} />
                 </div>
               )}
