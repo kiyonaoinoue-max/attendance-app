@@ -259,15 +259,46 @@ export default function AttendancePage() {
         }
     }, []);
 
+    // 指定した時限に授業が設定されているか判定（0=HRは常に対象）
+    const hasSubjectForPeriod = useCallback((pId: number): boolean => {
+        if (pId === 0) return true;
+        const dObj = parseISO(date);
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayStr = days[dObj.getDay()];
+
+        // 臨時時間割（差し替え）をチェック
+        const overrideKey = `${date}-${pId}`;
+        const overrideSubjectId = settings.timetableOverrides?.[overrideKey];
+        if (overrideSubjectId) {
+            return subjects.some((s: Subject) => s.id === overrideSubjectId);
+        }
+
+        const secondTermStart = settings.secondTerm?.start || '';
+        const secondTermEnd = settings.secondTerm?.end || '';
+        const isSecond = Boolean(secondTermStart && secondTermEnd && date >= secondTermStart && date <= secondTermEnd);
+        const tKey: 'first' | 'second' = isSecond ? 'second' : 'first';
+        const gKey: 'year1' | 'year2' = selectedGrade === 1 ? 'year1' : 'year2';
+
+        const key = `${dayStr}-${pId}`;
+        const timetable = settings.timetables?.[gKey]?.[tKey] || {};
+        const subjectId = timetable[key];
+        if (!subjectId) return false;
+        return subjects.some((s: Subject) => s.id === subjectId);
+    }, [date, settings, subjects, selectedGrade]);
+
     const executeDayAbsent = useCallback(() => {
         if (!selectedStudentId) return;
         setShowDayAbsentConfirm(false);
         const periodCount = settings.periodCount ?? 4;
-        // Mark all periods (0=HR, 1~periodCount) as absent
+        // HR(0)および授業が設定されている時限のみ欠席にし、授業未設定のコマは未入力(null)にクリアする
         for (let p = 0; p <= periodCount; p++) {
-            toggleAttendance(selectedStudentId, date, p, 'absent');
+            if (hasSubjectForPeriod(p)) {
+                toggleAttendance(selectedStudentId, date, p, 'absent');
+            } else {
+                toggleAttendance(selectedStudentId, date, p, null);
+            }
         }
-    }, [selectedStudentId, date, settings.periodCount, toggleAttendance]);
+    }, [selectedStudentId, date, settings.periodCount, hasSubjectForPeriod, toggleAttendance]);
 
     // Bulk reset (全員未入力) state
     const [showBulkResetConfirm, setShowBulkResetConfirm] = useState(false);
@@ -393,9 +424,9 @@ export default function AttendancePage() {
     // Assuming simple date check for now
     const d = parseISO(date);
     // Safe access with fallback defaults
-    const secondTermStart = settings.secondTerm?.start || settings.termStartDate || format(new Date(), 'yyyy-MM-dd');
-    const secondTermEnd = settings.secondTerm?.end || settings.termEndDate || format(new Date(), 'yyyy-MM-dd');
-    const isSecondTerm = d >= parseISO(secondTermStart) && d <= parseISO(secondTermEnd);
+    const secondTermStart = settings.secondTerm?.start || '';
+    const secondTermEnd = settings.secondTerm?.end || '';
+    const isSecondTerm = Boolean(secondTermStart && secondTermEnd && date >= secondTermStart && date <= secondTermEnd);
     const termKey: 'first' | 'second' = isSecondTerm ? 'second' : 'first';
     const gradeKey: 'year1' | 'year2' = selectedGrade === 1 ? 'year1' : 'year2';
 
@@ -896,7 +927,7 @@ export default function AttendancePage() {
                                 {selectedStudentId ? students.find(s => s.id === selectedStudentId)?.name : ''}
                             </p>
                             <p className="text-red-600 text-sm mt-1">
-                                {format(parseISO(date), 'M月d日(EEE)', { locale: ja })}の全{(settings.periodCount ?? 4) + 1}コマを「欠席」にします
+                                {format(parseISO(date), 'M月d日(EEE)', { locale: ja })}の授業がある全{PERIODS.filter(p => hasSubjectForPeriod(p.id)).length}コマ（HR含む）を「欠席」にします
                             </p>
                         </div>
                         <div className="flex gap-3">

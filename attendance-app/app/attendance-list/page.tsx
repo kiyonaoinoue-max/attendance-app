@@ -289,7 +289,7 @@ export default function AttendanceListPage() {
                                                         p === 0 && !isHoliday ? "bg-slate-50/50" : "",
                                                         isNoSubjectSlot ? "bg-slate-200/40" : ""
                                                     )}>
-                                                        {status ? (
+                                                        {status && !isNoSubjectSlot ? (
                                                             <span className={cn("font-extrabold text-2xl md:text-3xl leading-none select-none", status.color)}>
                                                                 {status.symbol}
                                                             </span>
